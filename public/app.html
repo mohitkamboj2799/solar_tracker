@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM Surya Ghar — Vendor Tracker v2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sun:#FF8C00;--sun2:#FFB347;--glow:#FFD580;
+  --bg:#09101E;--bg2:#0F1929;--bg3:#162133;--panel:#111E33;
+  --border:#1D2E48;--border2:#253654;
+  --text:#E4EAF5;--text2:#8498BB;--text3:#455A7A;
+  --green:#22C55E;--blue:#3B82F6;--yellow:#EAB308;
+  --red:#EF4444;--purple:#A855F7;--cyan:#06B6D4;--orange:#F97316;
+  --paid:#22C55E;--partial:#EAB308;--unpaid:#EF4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ─── HEADER ─── */
+header{background:linear-gradient(135deg,#0A1120,#152035);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:200;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-sun{width:34px;height:34px;background:radial-gradient(circle,#FFE080 0%,#FF8C00 55%,#C05000 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 18px rgba(255,140,0,.6);animation:pulse 3s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 18px rgba(255,140,0,.5);}50%{box-shadow:0 0 30px rgba(255,140,0,.9),0 0 60px rgba(255,140,0,.3);}}
+.logo-title{font-family:'Rajdhani',sans-serif;font-size:19px;font-weight:700;}
+.logo-title span{color:var(--sun);}
+.logo-sub{font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;letter-spacing:2px;}
+.header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--sun);color:#000;}
+.btn-primary:hover{background:var(--sun2);transform:translateY(-1px);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-outline:hover{border-color:var(--sun);color:var(--sun);}
+.btn-green{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green);}
+.btn-green:hover{background:rgba(34,197,94,.25);}
+.btn-blue{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:var(--blue);}
+.btn-blue:hover{background:rgba(59,130,246,.25);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-xs{padding:3px 8px;font-size:10px;}
+.ptag{background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.3);color:var(--sun);padding:3px 10px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+
+/* ─── LAYOUT ─── */
+.app{display:flex;height:calc(100vh - 60px);}
+.sidebar{width:250px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
+.main{flex:1;overflow-y:auto;padding:20px;}
+
+/* ─── SIDEBAR ─── */
+.sb-sect{padding:14px;border-bottom:1px solid var(--border);}
+.sb-lbl{font-size:9px;letter-spacing:2px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:8px;text-transform:uppercase;}
+.stats-g{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.stat-c{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px;text-align:center;}
+.stat-v{font-family:'Rajdhani',sans-serif;font-size:21px;font-weight:700;}
+.stat-l{font-size:9px;color:var(--text3);margin-top:2px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--text2);margin-bottom:3px;transition:all .2s;}
+.nav-item:hover,.nav-item.active{background:rgba(255,140,0,.1);color:var(--sun);}
+.nav-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.nav-cnt{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--bg3);padding:2px 6px;border-radius:8px;}
+
+/* ─── PAYMENT SUMMARY SIDEBAR ─── */
+.pay-mini{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:6px;}
+.pay-mini-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;}
+.pay-mini-key{color:var(--text3);}
+.pay-mini-val{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+
+/* ─── TOOLBAR ─── */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.search-box{flex:1;min-width:180px;display:flex;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:0 12px;gap:8px;transition:border-color .2s;}
+.search-box:focus-within{border-color:var(--sun);}
+.search-box input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:12px;padding:9px 0;font-family:'IBM Plex Sans',sans-serif;}
+.search-box input::placeholder{color:var(--text3);}
+.fsel{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:12px;outline:none;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+.fsel:focus{border-color:var(--sun);}
+
+/* ─── STAGE PILLS ─── */
+.spills{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.spill{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--panel);font-size:11px;cursor:pointer;transition:all .2s;}
+.spill:hover{border-color:var(--sun);color:var(--sun);}
+.spill.active{border-color:var(--sun);background:rgba(255,140,0,.1);color:var(--sun);}
+.spill-cnt{font-family:'IBM Plex Mono',monospace;font-weight:700;}
+
+/* ─── CARDS ─── */
+.cards{display:flex;flex-direction:column;gap:14px;}
+.ccard{background:var(--panel);border:1px solid var(--border);border-radius:11px;overflow:hidden;transition:all .3s;position:relative;}
+.ccard:hover{border-color:rgba(255,140,0,.35);box-shadow:0 4px 28px rgba(255,140,0,.06);}
+.ccard.expanded{border-color:rgba(255,140,0,.5);}
+.card-head{padding:14px 18px;display:flex;align-items:center;gap:13px;cursor:pointer;}
+.avatar{width:42px;height:42px;border-radius:9px;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--sun);flex-shrink:0;}
+.cmeta{flex:1;min-width:0;}
+.cname{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cid{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-top:1px;}
+.cloc{font-size:11px;color:var(--text2);margin-top:2px;}
+.card-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.cbadge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;}
+.camount{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--sun);font-weight:700;}
+.expbtn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;flex-shrink:0;transition:color .2s;}
+.expbtn:hover{color:var(--sun);}
+
+/* ─── PAYMENT STRIP ─── */
+.pay-strip{padding:8px 18px;background:rgba(0,0,0,.2);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pay-bar-wrap{flex:1;min-width:120px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.pay-bar-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.pay-info{display:flex;gap:10px;font-size:10px;font-family:'IBM Plex Mono',monospace;flex-wrap:wrap;}
+.pay-pill{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
+
+/* ─── STAGE TRACKER ─── */
+.stage-tr{padding:6px 18px 14px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;}
+.stage-tr::-webkit-scrollbar{display:none;}
+.s-step{display:flex;align-items:center;flex-shrink:0;}
+.s-node{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:66px;}
+.s-circ{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--border);background:var(--bg3);transition:all .3s;position:relative;}
+.s-circ.done{border-color:var(--green);background:rgba(34,197,94,.15);color:var(--green);}
+.s-circ.active{border-color:var(--sun);background:rgba(255,140,0,.15);color:var(--sun);box-shadow:0 0 10px rgba(255,140,0,.4);}
+.s-circ.active::after{content:'';position:absolute;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,140,0,.3);animation:ripple 1.5s ease-out infinite;}
+@keyframes ripple{0%{opacity:1;transform:scale(.8);}100%{opacity:0;transform:scale(1.5);}}
+.s-circ.pending{color:var(--text3);}
+.s-lbl{font-size:8px;color:var(--text3);text-align:center;line-height:1.3;font-family:'IBM Plex Mono',monospace;max-width:62px;}
+.s-lbl.done{color:var(--green);}
+.s-lbl.active{color:var(--sun);}
+.s-conn{width:24px;height:2px;background:var(--border);flex-shrink:0;margin-bottom:16px;}
+.s-conn.done{background:var(--green);}
+.s-conn.active{background:linear-gradient(90deg,var(--green),var(--sun));}
+
+/* ─── DETAILS PANEL ─── */
+.cdetails{display:none;border-top:1px solid var(--border);padding:18px;background:rgba(8,12,22,.5);}
+.cdetails.open{display:block;animation:slideDown .2s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:16px;}
+.det-sec{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:12px;}
+.det-title{font-size:9px;letter-spacing:2px;color:var(--sun);text-transform:uppercase;font-family:'IBM Plex Mono',monospace;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+.det-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px;}
+.dk{color:var(--text3);}
+.dv{color:var(--text);font-weight:500;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.dv.sun{color:var(--sun);}.dv.grn{color:var(--green);}.dv.blu{color:var(--blue);}.dv.prp{color:var(--purple);}.dv.red{color:var(--red);}
+
+/* ─── PAYMENT PANEL ─── */
+.pay-panel{background:linear-gradient(135deg,rgba(34,197,94,.04),rgba(59,130,246,.04));border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:14px;margin-bottom:12px;}
+.pay-panel-title{font-size:9px;letter-spacing:2px;color:var(--green);text-transform:uppercase;font-family:'IBM Plex Mono',monospace;margin-bottom:12px;}
+.pay-summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.pay-sum-box{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center;}
+.pay-sum-val{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;}
+.pay-sum-lbl{font-size:9px;color:var(--text3);margin-top:2px;}
+.pay-history{margin-top:10px;}
+.pay-hist-title{font-size:10px;color:var(--text2);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;}
+.pay-log-item{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:11px;}
+.pay-log-date{color:var(--text3);font-family:'IBM Plex Mono',monospace;min-width:80px;}
+.pay-log-mode{padding:2px 7px;border-radius:4px;font-size:9px;font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.pay-log-amt{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--green);}
+.pay-log-note{color:var(--text3);font-size:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pay-add-btn{margin-top:8px;}
+
+/* ─── LOAD EXT ─── */
+.load-ext{background:linear-gradient(135deg,rgba(59,130,246,.05),rgba(168,85,247,.05));border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:12px;margin-bottom:12px;}
+.load-ext-title{font-size:9px;letter-spacing:2px;color:var(--blue);text-transform:uppercase;font-family:'IBM Plex Mono',monospace;margin-bottom:9px;}
+.load-items{display:flex;flex-wrap:wrap;gap:6px;}
+.load-chip{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.22);border-radius:5px;padding:5px 9px;font-size:10px;display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;color:var(--text2);}
+
+/* ─── CARD ACTIONS ─── */
+.card-acts{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+
+/* ─── MODALS ─── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;width:600px;max-width:95vw;max-height:92vh;overflow-y:auto;padding:26px;position:relative;animation:mIn .2s ease;}
+.modal-sm{width:460px;}
+@keyframes mIn{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:18px;}
+.mclose{position:absolute;top:18px;right:18px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;}
+.fg{margin-bottom:13px;}
+.fl{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-family:'IBM Plex Mono',monospace;}
+.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:12px;outline:none;transition:border-color .2s;font-family:'IBM Plex Sans',sans-serif;}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--sun);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fta{resize:vertical;min-height:70px;}
+.checks{display:flex;flex-wrap:wrap;gap:6px;}
+.chk{display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:11px;transition:all .2s;user-select:none;}
+.chk input{display:none;}
+.chk.checked{border-color:var(--blue);background:rgba(59,130,246,.1);color:var(--blue);}
+.sect-divider{border-top:1px solid var(--border);margin:14px 0;padding-top:14px;}
+.sect-label{font-size:10px;color:var(--sun);font-family:'IBM Plex Mono';letter-spacing:2px;margin-bottom:10px;}
+
+/* ─── IMPORT PANEL ─── */
+.import-zone{border:2px dashed var(--border2);border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:all .3s;background:var(--bg3);}
+.import-zone:hover,.import-zone.drag{border-color:var(--sun);background:rgba(255,140,0,.05);}
+.import-zone input{display:none;}
+.import-icon{font-size:36px;margin-bottom:10px;}
+.import-text{font-size:13px;color:var(--text2);}
+.import-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+.import-preview{margin-top:14px;}
+.preview-table{width:100%;border-collapse:collapse;font-size:11px;}
+.preview-table th{background:var(--bg2);padding:7px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);border-bottom:1px solid var(--border);}
+.preview-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
+.preview-table tr:hover td{background:rgba(255,255,255,.02);}
+.col-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.col-map-row{display:flex;align-items:center;gap:8px;font-size:11px;}
+.col-map-key{color:var(--text3);min-width:100px;font-family:'IBM Plex Mono',monospace;}
+
+/* ─── PROGRESS BAR ─── */
+.prog-wrap{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin:8px 0;}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--sun),var(--sun2));}
+
+/* ─── NOTIFICATION TOAST ─── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--green);border-radius:9px;padding:12px 18px;font-size:12px;color:var(--green);display:none;z-index:9999;animation:toastIn .3s ease;}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ─── REMOTE INDICATOR ─── */
+.remote-ind{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.remote-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);animation:blink 2s ease-in-out infinite;}
+.remote-dot.connected{background:var(--green);animation:none;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;};}
+
+/* ─── PAGE HEADER ─── */
+.ph{margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.ph-title{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;}
+.ph-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* ─── EXCEL TEMPLATE INFO ─── */
+.tpl-info{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:12px;margin-top:12px;}
+.tpl-title{font-size:10px;color:var(--blue);font-family:'IBM Plex Mono';letter-spacing:1px;margin-bottom:8px;}
+.tpl-cols{display:flex;flex-wrap:wrap;gap:4px;}
+.tpl-col{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:4px;padding:2px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--blue);}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ─── TAG ─── */
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-family:'IBM Plex Mono',monospace;}
+
+@media(max-width:768px){.sidebar{display:none;}.frow{grid-template-columns:1fr;}.pay-summary-row{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-sun">☀️</div>
+    <div>
+      <div class="logo-title">PM <span>Surya Ghar</span></div>
+      <div class="logo-sub">VENDOR TRACKER v2.0</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="remote-ind">
+      <div class="remote-dot" id="remote-dot"></div>
+      <span id="remote-status">Local Mode</span>
+    </div>
+    <span class="ptag">PMSGMBY</span>
+    <button class="btn btn-blue" onclick="openImport()">📂 Import Excel</button>
+    <button class="btn btn-outline" onclick="openConsumerModal()">+ Add Consumer</button>
+    <button class="btn btn-green" onclick="exportExcel()">⬇ Export XLSX</button>
+    <button class="btn btn-outline" onclick="openRemoteModal()">🌐 Remote</button>
+  </div>
+</header>
+
+<div class="app">
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-sect">
+    <div class="sb-lbl">Overview</div>
+    <div class="stats-g">
+      <div class="stat-c"><div class="stat-v" style="color:var(--text)" id="st-total">0</div><div class="stat-l">Total Files</div></div>
+      <div class="stat-c"><div class="stat-v" style="color:var(--green)" id="st-done">0</div><div class="stat-l">Completed</div></div>
+      <div class="stat-c"><div class="stat-v" style="color:var(--sun)" id="st-active">0</div><div class="stat-l">In Progress</div></div>
+      <div class="stat-c"><div class="stat-v" style="color:var(--red)" id="st-pending">0</div><div class="stat-l">Pending</div></div>
+    </div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Payment Summary</div>
+    <div class="pay-mini">
+      <div class="pay-mini-row"><span class="pay-mini-key">Total Billed</span><span class="pay-mini-val" id="sb-total-billed" style="color:var(--sun)">₹0</span></div>
+      <div class="pay-mini-row"><span class="pay-mini-key">Received</span><span class="pay-mini-val" id="sb-received" style="color:var(--green)">₹0</span></div>
+      <div class="pay-mini-row"><span class="pay-mini-key">Remaining</span><span class="pay-mini-val" id="sb-remaining" style="color:var(--red)">₹0</span></div>
+      <div class="prog-wrap"><div class="prog-fill" id="sb-paybar" style="width:0%;background:linear-gradient(90deg,var(--green),#16a34a)"></div></div>
+      <div style="text-align:right;font-size:9px;color:var(--text3);font-family:IBM Plex Mono,monospace;" id="sb-paypct">0% collected</div>
+    </div>
+    <div class="pay-mini">
+      <div class="pay-mini-row"><span class="pay-mini-key">Fully Paid</span><span class="pay-mini-val" id="sb-fullpaid" style="color:var(--green)">0</span></div>
+      <div class="pay-mini-row"><span class="pay-mini-key">Partial</span><span class="pay-mini-val" id="sb-partial" style="color:var(--yellow)">0</span></div>
+      <div class="pay-mini-row"><span class="pay-mini-key">Unpaid</span><span class="pay-mini-val" id="sb-unpaid" style="color:var(--red)">0</span></div>
+    </div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Filter Stage</div>
+    <div class="nav-item active" onclick="filterStage('all',this)">
+      <span class="nav-dot" style="background:var(--sun)"></span>All Consumers
+      <span class="nav-cnt" id="nav-all">0</span>
+    </div>
+    <div class="nav-item" onclick="filterStage('Application Submitted',this)">
+      <span class="nav-dot" style="background:var(--blue)"></span>App Submitted
+    </div>
+    <div class="nav-item" onclick="filterStage('DISCOM Approved',this)">
+      <span class="nav-dot" style="background:var(--cyan)"></span>DISCOM Approved
+    </div>
+    <div class="nav-item" onclick="filterStage('Installation Done',this)">
+      <span class="nav-dot" style="background:var(--yellow)"></span>Installation Done
+    </div>
+    <div class="nav-item" onclick="filterStage('Net Meter Applied',this)">
+      <span class="nav-dot" style="background:var(--purple)"></span>Net Meter Applied
+    </div>
+    <div class="nav-item" onclick="filterStage('Inspection Done',this)">
+      <span class="nav-dot" style="background:var(--orange)"></span>Inspection Done
+    </div>
+    <div class="nav-item" onclick="filterStage('Subsidy Released',this)">
+      <span class="nav-dot" style="background:var(--green)"></span>Subsidy Released
+    </div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Filter Payment</div>
+    <div class="nav-item" onclick="filterPay('all',this)">
+      <span class="nav-dot" style="background:var(--text3)"></span>All
+    </div>
+    <div class="nav-item" onclick="filterPay('paid',this)">
+      <span class="nav-dot" style="background:var(--green)"></span>Fully Paid
+    </div>
+    <div class="nav-item" onclick="filterPay('partial',this)">
+      <span class="nav-dot" style="background:var(--yellow)"></span>Partial
+    </div>
+    <div class="nav-item" onclick="filterPay('unpaid',this)">
+      <span class="nav-dot" style="background:var(--red)"></span>Unpaid
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="ph">
+    <div>
+      <div class="ph-title">Consumer File Tracker</div>
+      <div class="ph-sub">PM Surya Ghar Muft Bijli Yojana — Vendor Portal</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-outline btn-sm" onclick="downloadTemplate()">📋 Excel Template</button>
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">📄 Export CSV</button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span style="color:var(--text3)">🔍</span>
+      <input type="text" id="search-in" placeholder="Search name, ID, location, DISCOM..." oninput="render()">
+    </div>
+    <select class="fsel" onchange="sortBy=this.value;render()">
+      <option value="">Sort by...</option>
+      <option value="name">Name A-Z</option>
+      <option value="amount">Amount ↓</option>
+      <option value="stage">Stage</option>
+      <option value="pay">Payment Status</option>
+      <option value="date">Date Added</option>
+    </select>
+    <select class="fsel" onchange="invFilter=this.value;render()">
+      <option value="">All Inverters</option>
+      <option value="Microtek">Microtek</option>
+      <option value="Havells">Havells</option>
+      <option value="SolarEdge">SolarEdge</option>
+      <option value="Growatt">Growatt</option>
+      <option value="Solis">Solis</option>
+    </select>
+    <select class="fsel" onchange="distFilter=this.value;render()">
+      <option value="">All Districts</option>
+    </select>
+  </div>
+
+  <!-- STAGE PILLS -->
+  <div class="spills" id="spills"></div>
+
+  <!-- CARDS -->
+  <div class="cards" id="cards"></div>
+</div>
+</div>
+
+<!-- ════════════ MODALS ════════════ -->
+
+<!-- ADD/EDIT CONSUMER MODAL -->
+<div class="overlay" id="modal-consumer">
+<div class="modal">
+  <div class="modal-title" id="modal-consumer-title">Add New Consumer File</div>
+  <button class="mclose" onclick="closeModal('modal-consumer')">✕</button>
+  <input type="hidden" id="f-edit-id">
+
+  <div class="frow">
+    <div class="fg"><label class="fl">Consumer Name *</label><input type="text" class="fi" id="f-name" placeholder="Full name"></div>
+    <div class="fg"><label class="fl">Consumer ID *</label><input type="text" class="fi" id="f-id" placeholder="SG-2024-001"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="fl">Location / District</label><input type="text" class="fi" id="f-loc" placeholder="Lucknow, UP"></div>
+    <div class="fg"><label class="fl">DISCOM</label><input type="text" class="fi" id="f-discom" placeholder="PVVNL / KESCO..."></div>
+  </div>
+
+  <div class="sect-divider">
+    <div class="sect-label">💰 PROJECT & PAYMENT</div>
+  </div>
+
+  <div class="frow">
+    <div class="fg"><label class="fl">Project Final Amount (₹) *</label><input type="number" class="fi" id="f-amount" placeholder="100000" oninput="calcNetCost()"></div>
+    <div class="fg"><label class="fl">Subsidy Amount (₹)</label><input type="number" class="fi" id="f-subsidy" placeholder="63000" oninput="calcNetCost()"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="fl">Net Cost to Consumer (₹)</label><input type="number" class="fi" id="f-netcost" placeholder="Auto-calculated" readonly style="opacity:.7"></div>
+    <div class="fg"><label class="fl">Payment Received (₹)</label><input type="number" class="fi" id="f-paid" placeholder="0" oninput="calcRemaining()"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="fl">Remaining Payment (₹)</label><input type="number" class="fi" id="f-remaining" placeholder="Auto-calculated" readonly style="opacity:.7"></div>
+    <div class="fg">
+      <label class="fl">Payment Mode</label>
+      <select class="fs" id="f-paymode">
+        <option value="">Select mode</option>
+        <option value="Cash">💵 Cash</option>
+        <option value="UPI">📱 UPI (GPay/PhonePe/Paytm)</option>
+        <option value="NEFT">🏦 NEFT</option>
+        <option value="RTGS">🏦 RTGS</option>
+        <option value="Cheque">📝 Cheque</option>
+        <option value="IMPS">⚡ IMPS</option>
+        <option value="DD">📄 Demand Draft</option>
+        <option value="Mixed">🔀 Mixed</option>
+      </select>
+    </div>
+  </div>
+  <div class="fg"><label class="fl">Payment Remark / UTR / Cheque No.</label><input type="text" class="fi" id="f-pay-ref" placeholder="UTR/Transaction ID or Cheque Number"></div>
+
+  <div class="sect-divider">
+    <div class="sect-label">🔌 SYSTEM SPECS</div>
+  </div>
+
+  <div class="frow">
+    <div class="fg">
+      <label class="fl">Inverter Brand</label>
+      <select class="fs" id="f-inverter">
+        <option value="Microtek">Microtek</option>
+        <option value="Havells">Havells</option>
+        <option value="SolarEdge">SolarEdge</option>
+        <option value="Growatt">Growatt</option>
+        <option value="Solis">Solis</option>
+        <option value="Envision">Envision</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Inverter Capacity (kW)</label><input type="number" class="fi" id="f-invcap" placeholder="3" step="0.5"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="fl">Solar Module Make</label><input type="text" class="fi" id="f-module" placeholder="Waaree / Adani / Vikram..."></div>
+    <div class="fg"><label class="fl">Module Capacity (Wp/panel)</label><input type="number" class="fi" id="f-modcap" placeholder="540"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label class="fl">No. of Panels</label><input type="number" class="fi" id="f-panels" placeholder="6"></div>
+    <div class="fg">
+      <label class="fl">Current Stage</label>
+      <select class="fs" id="f-stage">
+        <option value="0">📋 Application Submitted</option>
+        <option value="1">✅ DISCOM Approved</option>
+        <option value="2">🔧 Installation Done</option>
+        <option value="3">⚡ Net Meter Applied</option>
+        <option value="4">🔍 Inspection Done</option>
+        <option value="5">💰 Subsidy Released</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sect-divider">
+    <div class="sect-label">⚡ LOAD EXTENSION</div>
+  </div>
+  <div class="checks" id="f-loads">
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="AC (1.5 Ton)"> ❄️ AC 1.5 Ton</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="AC (2 Ton)"> ❄️ AC 2 Ton</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="Water Pump (1HP)"> 💧 Pump 1HP</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="Water Pump (2HP)"> 💧 Pump 2HP</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="Geyser (2kW)"> 🚿 Geyser 2kW</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="EV Charging"> 🔌 EV Charging</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="Refrigerator"> 🧊 Refrigerator</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="Washing Machine"> 🫧 Wash. Machine</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="LED Lights"> 💡 LED Lights</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="CCTV & Security"> 📷 CCTV</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="TV & Appliances"> 📺 TV/Appliances</label>
+    <label class="chk" onclick="toggleChk(this)"><input type="checkbox" value="Fan & Cooler"> 🌀 Fan/Cooler</label>
+  </div>
+
+  <div class="fg" style="margin-top:13px;"><label class="fl">Notes / Remarks</label><textarea class="fta" id="f-notes" placeholder="Site details, special instructions, remarks..."></textarea></div>
+
+  <div class="fg"><label class="fl">Date Added</label><input type="date" class="fi" id="f-date"></div>
+
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+    <button class="btn btn-outline" onclick="closeModal('modal-consumer')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveConsumer()">💾 Save Consumer</button>
+  </div>
+</div>
+</div>
+
+<!-- ADD PAYMENT MODAL -->
+<div class="overlay" id="modal-pay">
+<div class="modal modal-sm">
+  <div class="modal-title">Add Payment Entry</div>
+  <button class="mclose" onclick="closeModal('modal-pay')">✕</button>
+  <input type="hidden" id="pay-consumer-id">
+
+  <div class="fg"><label class="fl">Amount Received (₹) *</label><input type="number" class="fi" id="pay-amount" placeholder="Enter amount"></div>
+  <div class="frow">
+    <div class="fg">
+      <label class="fl">Payment Mode *</label>
+      <select class="fs" id="pay-mode">
+        <option value="Cash">💵 Cash</option>
+        <option value="UPI">📱 UPI</option>
+        <option value="NEFT">🏦 NEFT</option>
+        <option value="RTGS">🏦 RTGS</option>
+        <option value="Cheque">📝 Cheque</option>
+        <option value="IMPS">⚡ IMPS</option>
+        <option value="DD">📄 Demand Draft</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="pay-date"></div>
+  </div>
+  <div class="fg"><label class="fl">UTR / Cheque No. / Reference</label><input type="text" class="fi" id="pay-ref" placeholder="Transaction ID, Cheque No., etc."></div>
+  <div class="fg"><label class="fl">Remark</label><input type="text" class="fi" id="pay-remark" placeholder="Advance / Final payment / Subsidy adjustment..."></div>
+
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+    <button class="btn btn-outline" onclick="closeModal('modal-pay')">Cancel</button>
+    <button class="btn btn-green" onclick="addPayment()">✅ Add Payment</button>
+  </div>
+</div>
+</div>
+
+<!-- IMPORT EXCEL MODAL -->
+<div class="overlay" id="modal-import">
+<div class="modal">
+  <div class="modal-title">📂 Import from Excel / CSV</div>
+  <button class="mclose" onclick="closeModal('modal-import')">✕</button>
+
+  <div class="import-zone" id="import-zone" onclick="document.getElementById('file-in').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+    <input type="file" id="file-in" accept=".xlsx,.xls,.csv" onchange="handleFile(event)">
+    <div class="import-icon">📊</div>
+    <div class="import-text">Click to select or Drag & Drop your Excel file here</div>
+    <div class="import-sub">Supports .xlsx, .xls, .csv files</div>
+  </div>
+
+  <div class="tpl-info">
+    <div class="tpl-title">📋 EXPECTED COLUMNS (download template below)</div>
+    <div class="tpl-cols">
+      <span class="tpl-col">Confirmation date</span>
+      <span class="tpl-col">Plant Capacity</span>
+      <span class="tpl-col">Panel</span>
+      <span class="tpl-col">Inverter Capacity</span>
+      <span class="tpl-col">Inverter</span>
+      <span class="tpl-col">Name</span>
+      <span class="tpl-col">Permanent Address</span>
+      <span class="tpl-col">Current Status Of UHBVN Application</span>
+      <span class="tpl-col">Current Status Of NP Application</span>
+      <span class="tpl-col">Invoice date</span>
+      <span class="tpl-col">Total Amount</span>
+      <span class="tpl-col">Rcvd Amount</span>
+      <span class="tpl-col">Balance</span>
+      <span class="tpl-col">Date</span>
+      <span class="tpl-col">Amount</span>
+      <span class="tpl-col">Mode of payment</span>
+      <span class="tpl-col">Remarks</span>
+      <span class="tpl-col">MNRE Application date</span>
+      <span class="tpl-col">UHBVN Application date</span>
+      <span class="tpl-col">Discom file submission</span>
+      <span class="tpl-col">Net Meter</span>
+      <span class="tpl-col">Inverter settings</span>
+      <span class="tpl-col">1-2 week visit</span>
+      <span class="tpl-col">PCR</span>
+      <span class="tpl-col">PCR Approval</span>
+      <span class="tpl-col">Subsidy Request</span>
+      <span class="tpl-col">Subsidy disbursal</span>
+    </div>
+  </div>
+
+  <div id="import-preview" class="import-preview" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:12px;color:var(--text2);">Preview <span id="import-count"></span> records</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="importData('append')">➕ Append to Existing</button>
+        <button class="btn btn-primary btn-sm" onclick="importData('replace')">🔄 Replace All</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;max-height:240px;overflow-y:auto;">
+      <table class="preview-table" id="preview-tbl"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;">
+    <button class="btn btn-outline btn-sm" onclick="downloadTemplate()">📥 Download Excel Template</button>
+  </div>
+</div>
+</div>
+
+<!-- REMOTE ACCESS MODAL -->
+<div class="overlay" id="modal-remote">
+<div class="modal modal-sm">
+  <div class="modal-title">🌐 Remote Access Setup</div>
+  <button class="mclose" onclick="closeModal('modal-remote')">✕</button>
+
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--sun);font-family:IBM Plex Mono;letter-spacing:1px;margin-bottom:10px;">OPTION 1 — RUN LOCAL SERVER</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;">
+      Run the companion <code style="color:var(--cyan);background:var(--bg2);padding:1px 5px;border-radius:3px;">server.py</code> file on your PC/laptop.<br>
+      Other devices on your network can access via:<br>
+      <span style="color:var(--sun);font-family:IBM Plex Mono;">http://YOUR_IP:5050</span>
+    </div>
+    <div style="margin-top:10px;background:var(--bg2);border-radius:6px;padding:10px;font-size:11px;font-family:IBM Plex Mono;color:var(--cyan);">
+      python server.py<br>
+      <span style="color:var(--text3)"># Then open on any phone/tablet on same WiFi</span>
+    </div>
+  </div>
+
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--blue);font-family:IBM Plex Mono;letter-spacing:1px;margin-bottom:10px;">OPTION 2 — API SERVER URL</div>
+    <div class="fg" style="margin-bottom:8px;">
+      <label class="fl">Backend API URL (optional)</label>
+      <input type="text" class="fi" id="api-url" placeholder="http://192.168.1.5:5050/api" value="">
+    </div>
+    <div class="fg">
+      <label class="fl">API Key (if required)</label>
+      <input type="text" class="fi" id="api-key" placeholder="your-api-key">
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="btn btn-blue btn-sm" onclick="testConnection()">🔗 Test Connection</button>
+      <button class="btn btn-outline btn-sm" onclick="syncToServer()">⬆ Push to Server</button>
+      <button class="btn btn-outline btn-sm" onclick="pullFromServer()">⬇ Pull from Server</button>
+    </div>
+    <div id="conn-status" style="margin-top:8px;font-size:11px;font-family:IBM Plex Mono;color:var(--text3);"></div>
+  </div>
+
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;">
+    <div style="font-size:11px;color:var(--green);font-family:IBM Plex Mono;letter-spacing:1px;margin-bottom:10px;">LOCAL STORAGE STATUS</div>
+    <div style="font-size:12px;color:var(--text2);" id="ls-info"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="btn btn-outline btn-sm" onclick="backupToJSON()">💾 Backup JSON</button>
+      <button class="btn btn-outline btn-sm" onclick="restoreFromJSON()">📂 Restore JSON</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const STAGES=['Application Submitted','DISCOM Approved','Installation Done','Net Meter Applied','Inspection Done','Subsidy Released'];
+const SICONS=['📋','✅','🔧','⚡','🔍','💰'];
+const SBADGE=[
+  {bg:'rgba(59,130,246,.15)',c:'#3B82F6'},
+  {bg:'rgba(6,182,212,.15)',c:'#06B6D4'},
+  {bg:'rgba(234,179,8,.15)',c:'#EAB308'},
+  {bg:'rgba(168,85,247,.15)',c:'#A855F7'},
+  {bg:'rgba(249,115,22,.15)',c:'#F97316'},
+  {bg:'rgba(34,197,94,.15)',c:'#22C55E'},
+];
+const LOAD_ICONS={'AC (1.5 Ton)':'❄️','AC (2 Ton)':'❄️','Water Pump (1HP)':'💧','Water Pump (2HP)':'💧','Geyser (2kW)':'🚿','EV Charging':'🔌','Refrigerator':'🧊','Washing Machine':'🫧','LED Lights':'💡','CCTV & Security':'📷','TV & Appliances':'📺','Fan & Cooler':'🌀'};
+const PAY_COLORS={'Cash':'#22C55E','UPI':'#A855F7','NEFT':'#3B82F6','RTGS':'#3B82F6','Cheque':'#EAB308','IMPS':'#06B6D4','DD':'#F97316','Mixed':'#8498BB'};
+
+let consumers=[];
+let sortBy='',stageFilter='all',payFilter='all',invFilter='',distFilter='';
+let importedRows=[];
+
+// ─── LOAD / SAVE ───────────────────────────────────────
+function save(){try{localStorage.setItem('sg_consumers',JSON.stringify(consumers));}catch(e){}}
+function load(){
+  try{
+    const d=localStorage.getItem('sg_consumers');
+    if(d)consumers=JSON.parse(d);
+    else consumers=DEMO_DATA();
+  }catch(e){consumers=DEMO_DATA();}
+}
+
+function DEMO_DATA(){
+  return [
+    {id:'1',name:'Bhag Ram',location:'Khuwala, Nanakpur, Pinjore',discom:'UHBVN',
+     amount:395000,subsidy:0,netcost:395000,paid:395000,balance:0,paymode:'Cash',payref:'',
+     inverter:'Evvo',invcap:8,module:'Vikram DCR',modcap:350,panels:'',stageIdx:5,
+     uhbvnStatus:'Connection released',npStatus:'CFA released',
+     loads:[],notes:'',date:'17-12-2022',
+     milestones:{confirmationDate:'17-12-2022',invoiceDate:'Done',mnreDate:'',uhbvnDate:'',
+       discomSubmission:'',netMeterDate:'',inverterSettingsDate:'',weekVisitDate:'',
+       pcrDate:'',pcrApprovalDate:'',subsidyRequestDate:'',subsidyDisbursalDate:''},
+     payments:[{date:'29-11-2022',amount:50000,mode:'Cash',ref:'',remark:'Payment received'}]},
+    {id:'SG-2024-002',name:'Sunita Devi',location:'Varanasi, UP',discom:'PuVVNL',
+     amount:78000,subsidy:45000,netcost:33000,paid:15000,paymode:'Cash',payref:'',
+     inverter:'Microtek',invcap:2,module:'Adani Solar',modcap:440,panels:5,stageIdx:2,
+     loads:['LED Lights','Refrigerator','Washing Machine'],
+     notes:'Installation completed. Net meter pending.',date:'2024-04-22',
+     payments:[{date:'2024-04-22',amount:15000,mode:'Cash',ref:'',remark:'Advance payment'}]},
+    {id:'SG-2024-003',name:'Ramesh Prasad Gupta',location:'Kanpur, UP',discom:'KESCO',
+     amount:142000,subsidy:78000,netcost:64000,paid:64000,paymode:'NEFT',payref:'NEFT-2024-KNP',
+     inverter:'Havells',invcap:5,module:'Vikram Solar',modcap:540,panels:10,stageIdx:3,
+     loads:['AC (1.5 Ton)','EV Charging','Water Pump (1HP)','CCTV & Security'],
+     notes:'Net meter applied. Awaiting DISCOM inspection.',date:'2024-04-05',
+     payments:[{date:'2024-04-01',amount:30000,mode:'NEFT',ref:'NEFT-001',remark:'1st installment'},
+               {date:'2024-04-05',amount:34000,mode:'NEFT',ref:'NEFT-2024-KNP',remark:'2nd installment'}]},
+    {id:'SG-2024-004',name:'Meena Agarwal',location:'Agra, UP',discom:'DVVNL',
+     amount:65000,subsidy:30000,netcost:35000,paid:0,paymode:'',payref:'',
+     inverter:'Microtek',invcap:1,module:'Tata Power Solar',modcap:400,panels:3,stageIdx:0,
+     loads:['LED Lights'],notes:'Application just submitted. Awaiting feasibility.',date:'2024-05-15',
+     payments:[]},
+    {id:'SG-2024-005',name:'Vijay Singh',location:'Gorakhpur, UP',discom:'PuVVNL',
+     amount:115000,subsidy:63000,netcost:52000,paid:25000,paymode:'Cheque',payref:'CHQ-4421',
+     inverter:'Microtek',invcap:3,module:'Waaree',modcap:540,panels:7,stageIdx:1,
+     loads:['Water Pump (1HP)','Geyser (2kW)','Refrigerator','LED Lights'],
+     notes:'DISCOM approved. Installation scheduled.',date:'2024-05-02',
+     payments:[{date:'2024-05-02',amount:25000,mode:'Cheque',ref:'CHQ-4421',remark:'Advance cheque'}]},
+    {id:'SG-2024-006',name:'Priya Tiwari',location:'Prayagraj, UP',discom:'MVVNL',
+     amount:88000,subsidy:45000,netcost:43000,paid:43000,paymode:'UPI',payref:'GPay-PP-9910',
+     inverter:'SolarEdge',invcap:3,module:'Jinko Solar',modcap:500,panels:6,stageIdx:5,
+     loads:['AC (1.5 Ton)','EV Charging','LED Lights'],
+     notes:'Project complete. Consumer satisfied.',date:'2024-03-28',
+     payments:[{date:'2024-03-01',amount:20000,mode:'UPI',ref:'GPay-001',remark:'Advance'},
+               {date:'2024-03-28',amount:23000,mode:'UPI',ref:'GPay-PP-9910',remark:'Final'}]},
+  ];
+}
+
+// ─── HELPERS ───────────────────────────────────────────
+const fmtAmt=n=>{if(n>=100000)return`₹${(n/100000).toFixed(2)}L`;if(n>=1000)return`₹${(n/1000).toFixed(0)}K`;return`₹${n||0}`;};
+const initials=n=>n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const today=()=>new Date().toISOString().split('T')[0];
+const uuid=()=>'SG-'+(new Date().getFullYear())+'-'+(String(consumers.length+1).padStart(3,'0'));
+
+function payStatus(c){
+  const net=c.netcost||0;
+  const paid=c.paid||0;
+  if(paid<=0)return'unpaid';
+  if(paid>=net)return'paid';
+  return'partial';
+}
+function payColor(s){return s==='paid'?'var(--green)':s==='partial'?'var(--yellow)':'var(--red)';}
+function payLabel(s){return s==='paid'?'✅ Paid':s==='partial'?'◑ Partial':'⚠ Unpaid';}
+
+function toast(msg,type='green'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.borderColor=type==='green'?'var(--green)':type==='red'?'var(--red)':'var(--sun)';
+  t.style.color=type==='green'?'var(--green)':type==='red'?'var(--red)':'var(--sun)';
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',3000);
+}
+
+// ─── PAYMENT CALC ──────────────────────────────────────
+function calcNetCost(){
+  const a=parseFloat(document.getElementById('f-amount').value)||0;
+  const s=parseFloat(document.getElementById('f-subsidy').value)||0;
+  document.getElementById('f-netcost').value=Math.max(0,a-s);
+  calcRemaining();
+}
+function calcRemaining(){
+  const nc=parseFloat(document.getElementById('f-netcost').value)||0;
+  const pd=parseFloat(document.getElementById('f-paid').value)||0;
+  document.getElementById('f-remaining').value=Math.max(0,nc-pd);
+}
+
+// ─── FILTER / SORT ─────────────────────────────────────
+function filterStage(s,el){
+  stageFilter=s;
+  document.querySelectorAll('.sidebar .nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+function filterPay(s,el){
+  payFilter=s;
+  render();
+}
+function getFiltered(){
+  const q=document.getElementById('search-in').value.toLowerCase();
+  let r=consumers.filter(c=>{
+    const ms=!q||[c.name,c.id,c.location,c.discom,c.inverter].some(v=>v&&v.toLowerCase().includes(q));
+    const mStage=stageFilter==='all'||STAGES[c.stageIdx]===stageFilter;
+    const mPay=payFilter==='all'||payStatus(c)===payFilter;
+    const mInv=!invFilter||c.inverter===invFilter;
+    const mDist=!distFilter||c.location===distFilter;
+    return ms&&mStage&&mPay&&mInv&&mDist;
+  });
+  if(sortBy==='name')r.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(sortBy==='amount')r.sort((a,b)=>b.amount-a.amount);
+  else if(sortBy==='stage')r.sort((a,b)=>b.stageIdx-a.stageIdx);
+  else if(sortBy==='pay'){const pm={'paid':2,'partial':1,'unpaid':0};r.sort((a,b)=>pm[payStatus(b)]-pm[payStatus(a)]);}
+  else if(sortBy==='date')r.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  return r;
+}
+
+// ─── RENDER ───────────────────────────────────────────
+function render(){
+  updateSidebar();
+  renderPills();
+  renderCards();
+  updateDistFilter();
+}
+
+function updateSidebar(){
+  const total=consumers.length,done=consumers.filter(c=>c.stageIdx===5).length,
+        active=consumers.filter(c=>c.stageIdx>0&&c.stageIdx<5).length,
+        pend=consumers.filter(c=>c.stageIdx===0).length;
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-done').textContent=done;
+  document.getElementById('st-active').textContent=active;
+  document.getElementById('st-pending').textContent=pend;
+  document.getElementById('nav-all').textContent=total;
+
+  const totalBilled=consumers.reduce((s,c)=>s+(c.amount||0),0);
+  const totalReceived=consumers.reduce((s,c)=>s+(c.paid||0),0);
+  const totalRemaining=consumers.reduce((s,c)=>s+Math.max(0,(c.netcost||0)-(c.paid||0)),0);
+  const pct=totalBilled>0?Math.round(totalReceived/totalBilled*100):0;
+  document.getElementById('sb-total-billed').textContent=fmtAmt(totalBilled);
+  document.getElementById('sb-received').textContent=fmtAmt(totalReceived);
+  document.getElementById('sb-remaining').textContent=fmtAmt(totalRemaining);
+  document.getElementById('sb-paybar').style.width=pct+'%';
+  document.getElementById('sb-paypct').textContent=pct+'% collected';
+  document.getElementById('sb-fullpaid').textContent=consumers.filter(c=>payStatus(c)==='paid').length;
+  document.getElementById('sb-partial').textContent=consumers.filter(c=>payStatus(c)==='partial').length;
+  document.getElementById('sb-unpaid').textContent=consumers.filter(c=>payStatus(c)==='unpaid').length;
+  document.getElementById('ls-info').textContent=`${consumers.length} records stored locally (${Math.round(JSON.stringify(consumers).length/1024)}KB)`;
+}
+
+function renderPills(){
+  const cts=STAGES.map(s=>consumers.filter(c=>STAGES[c.stageIdx]===s).length);
+  let h='';
+  STAGES.forEach((s,i)=>{
+    const b=SBADGE[i];
+    h+=`<div class="spill" style="border-color:${b.c}30;color:${b.c};background:${b.bg}" onclick="stageFilter='${s}';render()">
+      ${SICONS[i]} ${s.split(' ').slice(0,2).join(' ')} <span class="spill-cnt">${cts[i]}</span>
+    </div>`;
+  });
+  document.getElementById('spills').innerHTML=h;
+}
+
+function updateDistFilter(){
+  const sel=document.querySelector('.fsel:last-of-type');
+  const locs=[...new Set(consumers.map(c=>c.location).filter(Boolean))].sort();
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">All Districts</option>`+locs.map(l=>`<option value="${l}"${l===cur?' selected':''}>${l}</option>`).join('');
+}
+
+function renderCards(){
+  const filtered=getFiltered();
+  const c=document.getElementById('cards');
+  if(!filtered.length){
+    c.innerHTML=`<div style="text-align:center;padding:50px;color:var(--text3);"><div style="font-size:36px;margin-bottom:10px;">🔍</div><div>No consumers found</div></div>`;
+    return;
+  }
+  c.innerHTML=filtered.map(renderCard).join('');
+}
+
+function renderMilestones(c){
+  const m=c.milestones||{};
+  const steps=[
+    {key:'confirmationDate',    label:'Confirmed',        icon:'📅'},
+    {key:'mnreDate',            label:'MNRE Applied',     icon:'📝'},
+    {key:'uhbvnDate',           label:'UHBVN Applied',    icon:'🏛'},
+    {key:'discomSubmission',    label:'DISCOM Submit',    icon:'📂'},
+    {key:'inverterSettingsDate',label:'Inv. Settings',    icon:'⚙️'},
+    {key:'weekVisitDate',       label:'1-2 Wk Visit',     icon:'🔎'},
+    {key:'netMeterDate',        label:'Net Meter',        icon:'⚡'},
+    {key:'pcrDate',             label:'PCR',              icon:'📊'},
+    {key:'pcrApprovalDate',     label:'PCR Approval',     icon:'✅'},
+    {key:'subsidyRequestDate',  label:'Subsidy Req.',     icon:'📤'},
+    {key:'subsidyDisbursalDate',label:'Subsidy Paid',     icon:'💰'},
+  ];
+  if(!steps.some(function(s){return m[s.key];})) return '';
+  var connector='<div style="width:18px;height:2px;background:var(--border);margin-bottom:20px;flex-shrink:0;"></div>';
+  var items=steps.map(function(s){
+    var v=m[s.key]; var done=!!v;
+    var circStyle=done
+      ?'background:rgba(34,197,94,.15);border:2px solid var(--green)'
+      :'background:var(--bg3);border:2px solid var(--border);opacity:.4';
+    var lblColor=done?'var(--green)':'var(--text3)';
+    var dateDiv=v?'<div style="font-size:8px;color:var(--text3);font-family:IBM Plex Mono;text-align:center">'+v+'</div>':'';
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px;flex-shrink:0;">'
+      +'<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;'+circStyle+'">'+(done?s.icon:'○')+'</div>'
+      +'<div style="font-size:8px;font-family:IBM Plex Mono;color:'+lblColor+';text-align:center;line-height:1.3">'+s.label+'</div>'
+      +dateDiv
+      +'</div>';
+  }).join(connector);
+  return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;">'
+    +'<div style="font-size:9px;letter-spacing:2px;color:var(--sun);font-family:IBM Plex Mono;margin-bottom:10px;">📅 MILESTONE TIMELINE</div>'
+    +'<div style="display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;">'+items+'</div>'
+    +'</div>';
+}
+
+function renderCard(c){
+  const sid=c.id.replace(/\W/g,'-');
+  const b=SBADGE[c.stageIdx];
+  const ps=payStatus(c);
+  const net=c.netcost||c.amount||0;
+  const paid=c.paid||0;
+  // Use balance from Excel directly if present, else compute
+  const rem=(c.balance!=null&&c.balance!=='')?Number(c.balance):Math.max(0,net-paid);
+  const payPct=(c.amount||0)>0?Math.min(100,Math.round(paid/(c.amount)*100)):0;
+  const totalKwp=((c.modcap||0)*(c.panels||0)/1000).toFixed(2);
+
+  // Stage tracker
+  let tr='';
+  STAGES.forEach((s,i)=>{
+    const cl=i<c.stageIdx?'done':i===c.stageIdx?'active':'pending';
+    const cc=i<c.stageIdx?'done':i===c.stageIdx?'active':'';
+    tr+=`<div class="s-step">
+      <div class="s-node">
+        <div class="s-circ ${cl}">${i<c.stageIdx?'✓':SICONS[i]}</div>
+        <div class="s-lbl ${cl}">${s.replace(' ','\n')}</div>
+      </div>
+      ${i<STAGES.length-1?`<div class="s-conn ${cc}"></div>`:''}
+    </div>`;
+  });
+
+  // Pay bar color
+  const pbColor=ps==='paid'?'var(--green)':ps==='partial'?'linear-gradient(90deg,var(--green),var(--yellow))':'var(--red)';
+
+  // Payments log — reversed so most recent is first
+  const allPays=(c.payments||[]).slice().reverse();
+  const payLogs=allPays.map(function(p,idx){
+    const mc=PAY_COLORS[p.mode]||'#8498BB';
+    const isLast=idx===0;
+    return '<div class="pay-log-item" style="'+(isLast?'border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.04)':'')+';">'
+      +'<span class="pay-log-date">'+p.date+'</span>'
+      +(p.mode?'<span class="pay-log-mode" style="background:'+mc+'22;color:'+mc+';border:1px solid '+mc+'44">'+p.mode+'</span>':'')
+      +(p.ref?'<span style="font-size:10px;color:var(--text3);font-family:IBM Plex Mono;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80px">'+p.ref+'</span>':'')
+      +(p.remark?'<span class="pay-log-note">'+p.remark+'</span>':'')
+      +(isLast?'<span style="font-size:9px;color:var(--green);font-family:IBM Plex Mono;white-space:nowrap">Latest</span>':'')
+      +'<span class="pay-log-amt">+'+fmtAmt(p.amount)+'</span>'
+      +'</div>';
+  }).join('');
+
+  const loads=(c.loads||[]).map(l=>`<div class="load-chip">${LOAD_ICONS[l]||'⚡'} ${l}</div>`).join('');
+
+  return `<div class="ccard" id="card-${sid}">
+    <div class="card-head" onclick="toggleCard('${sid}')">
+      <div class="avatar">${initials(c.name)}</div>
+      <div class="cmeta">
+        <div class="cname">${c.name}</div>
+        <div class="cid">${c.id} · ${c.discom||'N/A'}</div>
+        <div class="cloc">📍 ${c.location||'N/A'}</div>
+      </div>
+      <div class="card-right">
+        <span class="cbadge" style="background:${b.bg};color:${b.c}">${SICONS[c.stageIdx]} ${STAGES[c.stageIdx]}</span>
+        <span class="camount">${fmtAmt(c.amount)}</span>
+        <span class="pay-pill" style="background:${payColor(ps)}22;color:${payColor(ps)};border:1px solid ${payColor(ps)}44">${payLabel(ps)}</span>
+      </div>
+      <button class="expbtn" id="expbtn-${sid}">▼</button>
+    </div>
+
+    <!-- PAY STRIP -->
+    <div class="pay-strip">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:6px;">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-family:IBM Plex Mono;">
+            <span>Total: <strong style="color:var(--sun)">${fmtAmt(c.amount)}</strong></span>
+            <span>Rcvd: <strong style="color:var(--green)">${fmtAmt(paid)}</strong></span>
+            <span>Balance: <strong style="color:${rem>0?'var(--red)':'var(--green)'}">${rem>0?fmtAmt(rem):'✅ NIL'}</strong></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:10px;">
+            ${(()=>{
+              const last=(c.payments||[]).length>0?c.payments[c.payments.length-1]:null;
+              if(!last)return '';
+              const mc=PAY_COLORS[last.mode]||'#8498BB';
+              return '<span style="color:var(--text3)">Last:</span>'
+                +'<span style="color:var(--text2)">'+last.date+'</span>'
+                +'<span style="font-weight:700;color:var(--green)">'+fmtAmt(last.amount)+'</span>'
+                +(last.mode?'<span style="background:'+mc+'22;color:'+mc+';border:1px solid '+mc+'44;padding:1px 7px;border-radius:10px;font-family:IBM Plex Mono">'+last.mode+'</span>':'');
+            })()}
+          </div>
+        </div>
+        <div class="pay-bar-wrap"><div class="pay-bar-fill" style="width:${payPct}%;background:${pbColor}"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:3px;font-family:IBM Plex Mono;">
+          <span>${payPct}% collected</span>
+          ${c.amount?'<span>of '+fmtAmt(c.amount)+'</span>':''}
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE TRACKER -->
+    <div class="stage-tr">${tr}</div>
+
+    <!-- DETAILS -->
+    <div class="cdetails" id="det-${sid}">
+      <div class="det-grid">
+        <div class="det-sec">
+          <div class="det-title">💰 Financials</div>
+          <div class="det-row"><span class="dk">Invoice Total</span><span class="dv sun">${fmtAmt(c.amount)}</span></div>
+          <div class="det-row"><span class="dk">Subsidy</span><span class="dv" style="color:var(--cyan)">${c.subsidy?'-'+fmtAmt(c.subsidy):'—'}</span></div>
+          <div class="det-row"><span class="dk">Net Cost</span><span class="dv">${net?fmtAmt(net):'—'}</span></div>
+          <div class="det-row"><span class="dk">Received</span><span class="dv grn">${fmtAmt(paid)}</span></div>
+          <div class="det-row"><span class="dk">Balance</span><span class="dv red">${rem?fmtAmt(rem):'✅ Nil'}</span></div>
+          ${c.milestones&&c.milestones.invoiceDate?`<div class="det-row"><span class="dk">Invoice Date</span><span class="dv">${c.milestones.invoiceDate}</span></div>`:''}
+        </div>
+        <div class="det-sec">
+          <div class="det-title">🔌 Inverter & Panel</div>
+          <div class="det-row"><span class="dk">Inverter</span><span class="dv prp">${c.inverter||'—'}</span></div>
+          <div class="det-row"><span class="dk">Inv. Capacity</span><span class="dv sun">${c.invcap?c.invcap+' kW':'—'}</span></div>
+          <div class="det-row"><span class="dk">Plant Cap.</span><span class="dv sun">${totalKwp!='0.00'?totalKwp+' kWp':'—'}</span></div>
+          <div class="det-row"><span class="dk">Panel</span><span class="dv blu">${c.modcap?c.modcap+'Wp':'—'}${c.panels?' × '+c.panels:''}</span></div>
+          <div class="det-row"><span class="dk">Module Make</span><span class="dv blu">${c.module||'—'}</span></div>
+        </div>
+        <div class="det-sec">
+          <div class="det-title">📡 Application Status</div>
+          <div class="det-row"><span class="dk">UHBVN Status</span><span class="dv" style="color:var(--cyan)">${c.uhbvnStatus||'—'}</span></div>
+          <div class="det-row"><span class="dk">NP Status</span><span class="dv" style="color:var(--purple)">${c.npStatus||'—'}</span></div>
+          <div class="det-row"><span class="dk">DISCOM</span><span class="dv">${c.discom||'—'}</span></div>
+          <div class="det-row"><span class="dk">Address</span><span class="dv" style="white-space:normal;text-align:right;max-width:130px;line-height:1.4">${c.location||'—'}</span></div>
+          ${c.notes?`<div class="det-row" style="margin-top:4px;"><span class="dk">Notes</span><span class="dv" style="white-space:normal;text-align:right;max-width:130px;font-family:IBM Plex Sans;line-height:1.4;color:var(--text2)">${c.notes}</span></div>`:''}
+        </div>
+        <div class="det-sec">
+          <div class="det-title">📋 Remarks & Info</div>
+          <div class="det-row"><span class="dk">Confirmation</span><span class="dv">${(c.milestones&&c.milestones.confirmationDate)||c.date||'—'}</span></div>
+          <div class="det-row"><span class="dk">Stage</span><span class="dv sun">Stage ${c.stageIdx+1}/6</span></div>
+          <div style="margin-top:6px;">
+            <span class="tag" style="background:rgba(255,140,0,.1);color:var(--sun)">${Math.round(c.stageIdx/5*100)}% Complete</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MILESTONE TIMELINE -->
+      ${renderMilestones(c)}
+
+      <!-- PAYMENT PANEL -->
+      <div class="pay-panel">
+        <div class="pay-panel-title">💳 PAYMENT DETAILS</div>
+
+        <!-- 3-column summary: Total | Rcvd | Balance — exactly matching Excel columns -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:9px;color:var(--text3);font-family:IBM Plex Mono;letter-spacing:1px;margin-bottom:5px;">TOTAL AMOUNT</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--sun)">${fmtAmt(c.amount)}</div>
+            ${c.milestones&&c.milestones.invoiceDate?'<div style="font-size:9px;color:var(--text3);margin-top:4px;font-family:IBM Plex Mono;">Invoice: '+c.milestones.invoiceDate+'</div>':''}
+          </div>
+          <div style="background:var(--bg2);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:9px;color:var(--text3);font-family:IBM Plex Mono;letter-spacing:1px;margin-bottom:5px;">RCVD AMOUNT</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--green)">${fmtAmt(paid)}</div>
+            <div style="font-size:9px;color:var(--text3);margin-top:4px;">${payPct}% of total</div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid ${rem>0?'rgba(239,68,68,.25)':'rgba(34,197,94,.25)'};border-radius:8px;padding:12px;text-align:center;">
+            <div style="font-size:9px;color:var(--text3);font-family:IBM Plex Mono;letter-spacing:1px;margin-bottom:5px;">BALANCE</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:${rem>0?'var(--red)':'var(--green)'}">${rem>0?fmtAmt(rem):'✅ NIL'}</div>
+            ${rem>0?'<div style="font-size:9px;color:var(--red);margin-top:4px;">Outstanding</div>':'<div style="font-size:9px;color:var(--green);margin-top:4px;">Fully Paid</div>'}
+          </div>
+        </div>
+
+        <!-- Payment log -->
+        <div class="pay-history">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="pay-hist-title" style="margin-bottom:0;">PAYMENT LOG (${(c.payments||[]).length} ${(c.payments||[]).length===1?'entry':'entries'})</div>
+          </div>
+          ${payLogs||'<div style="font-size:11px;color:var(--text3);padding:8px 0;">No payment entries yet.</div>'}
+          <button class="btn btn-green btn-sm pay-add-btn" onclick="event.stopPropagation();openPayModal('${c.id}')">+ Add Payment Entry</button>
+        </div>
+      </div>
+
+      <!-- LOAD EXTENSION -->
+      <div class="load-ext">
+        <div class="load-ext-title">⚡ LOAD EXTENSION</div>
+        <div class="load-items">${loads||'<span style="color:var(--text3);font-size:11px;">None selected</span>'}</div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="card-acts">
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();advStage('${c.id}')">⬆ Advance Stage</button>
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();editConsumer('${c.id}')">✏️ Edit</button>
+        <button class="btn btn-green btn-sm" onclick="event.stopPropagation();openPayModal('${c.id}')">💳 Add Payment</button>
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();printCard('${c.id}')">🖨️ Print</button>
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();exportSingle('${c.id}')">📄 Export</button>
+        <button class="btn btn-xs" style="border:1px solid var(--red);color:var(--red);background:transparent" onclick="event.stopPropagation();delConsumer('${c.id}')">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(sid){
+  const d=document.getElementById(`det-${sid}`);
+  const b=document.getElementById(`expbtn-${sid}`);
+  const card=document.getElementById(`card-${sid}`);
+  const open=d.classList.contains('open');
+  d.classList.toggle('open',!open);
+  card.classList.toggle('expanded',!open);
+  b.textContent=open?'▼':'▲';
+}
+
+// ─── CONSUMER CRUD ─────────────────────────────────────
+function openConsumerModal(id=null){
+  const modal=document.getElementById('modal-consumer');
+  document.getElementById('f-edit-id').value=id||'';
+  document.getElementById('modal-consumer-title').textContent=id?'Edit Consumer File':'Add New Consumer File';
+  document.querySelectorAll('#f-loads .chk').forEach(el=>el.classList.remove('checked'));
+  document.getElementById('f-date').value=today();
+
+  if(id){
+    const c=consumers.find(x=>x.id===id);
+    if(!c)return;
+    document.getElementById('f-name').value=c.name;
+    document.getElementById('f-id').value=c.id;
+    document.getElementById('f-loc').value=c.location||'';
+    document.getElementById('f-discom').value=c.discom||'';
+    document.getElementById('f-amount').value=c.amount||'';
+    document.getElementById('f-subsidy').value=c.subsidy||'';
+    document.getElementById('f-netcost').value=c.netcost||'';
+    document.getElementById('f-paid').value=c.paid||'';
+    document.getElementById('f-remaining').value=Math.max(0,(c.netcost||0)-(c.paid||0));
+    document.getElementById('f-paymode').value=c.paymode||'';
+    document.getElementById('f-pay-ref').value=c.payref||'';
+    document.getElementById('f-inverter').value=c.inverter||'Microtek';
+    document.getElementById('f-invcap').value=c.invcap||'';
+    document.getElementById('f-module').value=c.module||'';
+    document.getElementById('f-modcap').value=c.modcap||'';
+    document.getElementById('f-panels').value=c.panels||'';
+    document.getElementById('f-stage').value=c.stageIdx||0;
+    document.getElementById('f-notes').value=c.notes||'';
+    document.getElementById('f-date').value=c.date||today();
+    (c.loads||[]).forEach(l=>{
+      document.querySelectorAll('#f-loads .chk').forEach(el=>{
+        if(el.querySelector('input').value===l)el.classList.add('checked');
+      });
+    });
+  } else {
+    ['f-name','f-id','f-loc','f-discom','f-amount','f-subsidy','f-netcost','f-paid','f-remaining','f-pay-ref','f-invcap','f-module','f-modcap','f-panels','f-notes'].forEach(id=>{document.getElementById(id).value='';});
+    document.getElementById('f-inverter').value='Microtek';
+    document.getElementById('f-stage').value='0';
+    document.getElementById('f-paymode').value='';
+  }
+  modal.classList.add('open');
+}
+
+function saveConsumer(){
+  const name=document.getElementById('f-name').value.trim();
+  const cid=document.getElementById('f-id').value.trim()||uuid();
+  if(!name){alert('Consumer name is required.');return;}
+
+  const editId=document.getElementById('f-edit-id').value;
+  const loads=[];
+  document.querySelectorAll('#f-loads .chk.checked input').forEach(inp=>loads.push(inp.value));
+
+  const amount=parseFloat(document.getElementById('f-amount').value)||0;
+  const subsidy=parseFloat(document.getElementById('f-subsidy').value)||0;
+  const netcost=Math.max(0,amount-subsidy);
+  const paid=parseFloat(document.getElementById('f-paid').value)||0;
+
+  const data={
+    id:cid,name,
+    location:document.getElementById('f-loc').value,
+    discom:document.getElementById('f-discom').value,
+    amount,subsidy,netcost,paid,
+    paymode:document.getElementById('f-paymode').value,
+    payref:document.getElementById('f-pay-ref').value,
+    inverter:document.getElementById('f-inverter').value,
+    invcap:parseFloat(document.getElementById('f-invcap').value)||1,
+    module:document.getElementById('f-module').value,
+    modcap:parseInt(document.getElementById('f-modcap').value)||400,
+    panels:parseInt(document.getElementById('f-panels').value)||3,
+    stageIdx:parseInt(document.getElementById('f-stage').value),
+    loads,
+    notes:document.getElementById('f-notes').value,
+    date:document.getElementById('f-date').value||today(),
+  };
+
+  if(editId){
+    const idx=consumers.findIndex(x=>x.id===editId);
+    if(idx>=0){data.payments=consumers[idx].payments||[];consumers[idx]=data;}
+  } else {
+    data.payments=paid>0?[{date:today(),amount:paid,mode:data.paymode||'Cash',ref:data.payref,remark:'Initial payment'}]:[];
+    consumers.unshift(data);
+  }
+  save();closeModal('modal-consumer');render();
+  toast(editId?'Consumer updated!':'Consumer added!');
+}
+
+function editConsumer(id){openConsumerModal(id);}
+function delConsumer(id){
+  if(confirm('Delete this consumer file? This cannot be undone.'))
+  {consumers=consumers.filter(c=>c.id!==id);save();render();toast('Deleted','red');}
+}
+
+function advStage(id){
+  const c=consumers.find(x=>x.id===id);
+  if(!c)return;
+  if(c.stageIdx>=5){alert('Already at final stage.');return;}
+  if(confirm(`Advance to: "${STAGES[c.stageIdx+1]}"?`)){c.stageIdx++;save();render();toast('Stage advanced!');}
+}
+
+// ─── PAYMENT ───────────────────────────────────────────
+function openPayModal(id){
+  document.getElementById('pay-consumer-id').value=id;
+  document.getElementById('pay-amount').value='';
+  document.getElementById('pay-date').value=today();
+  document.getElementById('pay-ref').value='';
+  document.getElementById('pay-remark').value='';
+  document.getElementById('pay-mode').value='Cash';
+  document.getElementById('modal-pay').classList.add('open');
+}
+
+function addPayment(){
+  const id=document.getElementById('pay-consumer-id').value;
+  const amt=parseFloat(document.getElementById('pay-amount').value);
+  if(!amt||amt<=0){alert('Enter valid payment amount.');return;}
+  const c=consumers.find(x=>x.id===id);
+  if(!c)return;
+  const entry={
+    date:document.getElementById('pay-date').value||today(),
+    amount:amt,
+    mode:document.getElementById('pay-mode').value,
+    ref:document.getElementById('pay-ref').value,
+    remark:document.getElementById('pay-remark').value,
+  };
+  c.payments=c.payments||[];
+  c.payments.push(entry);
+  c.paid=(c.paid||0)+amt;
+  c.paymode=entry.mode;
+  if(entry.ref)c.payref=entry.ref;
+  save();closeModal('modal-pay');render();
+  toast(`₹${amt.toLocaleString()} payment added!`);
+}
+
+// ─── EXPORT ────────────────────────────────────────────
+function exportExcel(){
+  if(typeof XLSX==='undefined'){alert('XLSX library not loaded.');return;}
+  const rows=consumers.map(c=>({
+    'Consumer ID':c.id,'Name':c.name,'Location':c.location,'DISCOM':c.discom,
+    'Amount (₹)':c.amount,'Subsidy (₹)':c.subsidy,'Net Cost (₹)':c.netcost,
+    'Paid (₹)':c.paid,'Remaining (₹)':Math.max(0,(c.netcost||0)-(c.paid||0)),
+    'Payment Mode':c.paymode,'Pay Reference':c.payref,
+    'Pay Status':payStatus(c).toUpperCase(),
+    'Inverter Brand':c.inverter,'Inverter kW':c.invcap,
+    'Module Make':c.module,'Module Wp':c.modcap,'No. Panels':c.panels,
+    'Total kWp':((c.modcap||0)*(c.panels||0)/1000).toFixed(2),
+    'Stage':STAGES[c.stageIdx],'Stage No.':c.stageIdx+1,
+    'Load Extension':(c.loads||[]).join('; '),
+    'Notes':c.notes,'Date':c.date
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Consumers',ws);
+
+  // Payment log sheet
+  const payRows=[];
+  consumers.forEach(c=>(c.payments||[]).forEach(p=>payRows.push({'Consumer ID':c.id,'Name':c.name,'Date':p.date,'Amount':p.amount,'Mode':p.mode,'Reference':p.ref,'Remark':p.remark})));
+  if(payRows.length){
+    const ws2=XLSX.utils.json_to_sheet(payRows);
+    XLSX.utils.book_append_sheet(wb,'Payment Log',ws2);
+  }
+  XLSX.writeFile(wb,`PMSuryaGhar_${today()}.xlsx`);
+  toast('Excel exported!');
+}
+
+function exportCSV(){
+  const headers=['Consumer ID','Name','Location','DISCOM','Amount','Subsidy','Net Cost','Paid','Remaining','Payment Mode','Stage','Load Extension','Notes','Date'];
+  const rows=consumers.map(c=>[c.id,c.name,c.location,c.discom,c.amount,c.subsidy,c.netcost||0,c.paid||0,Math.max(0,(c.netcost||0)-(c.paid||0)),c.paymode,STAGES[c.stageIdx],(c.loads||[]).join(';'),c.notes,c.date].map(v=>`"${v||''}"`).join(','));
+  const blob=new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`PMSuryaGhar_${today()}.csv`;a.click();
+  toast('CSV exported!');
+}
+
+function exportSingle(id){
+  const c=consumers.find(x=>x.id===id);if(!c)return;
+  if(typeof XLSX==='undefined'){exportSingleCSV(c);return;}
+  const rows=[c];
+  const ws=XLSX.utils.json_to_sheet(rows.map(c=>({'Consumer ID':c.id,'Name':c.name,'Amount':c.amount,'Net Cost':c.netcost,'Paid':c.paid,'Remaining':Math.max(0,(c.netcost||0)-(c.paid||0)),'Stage':STAGES[c.stageIdx]})));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,'File',ws);
+  XLSX.writeFile(wb,`${c.id}_${c.name.replace(/\s+/g,'_')}.xlsx`);
+}
+
+function downloadTemplate(){
+  if(typeof XLSX==='undefined'){alert('XLSX not loaded');return;}
+  const row={
+    'Confirmation date':   '01/01/2024',
+    'Plant Capacity':      '3 kW',
+    'Panel':               '540Wp x 6',
+    'Inverter Capacity':   '3',
+    'Inverter':            'Microtek',
+    'Name':                'Consumer Full Name',
+    'Permanent Address':   'Village/City, District, State',
+    'Current Status Of UHBVN Application': 'Approved',
+    'Current Status Of NP Application':    'Pending',
+    'Invoice date':        '15/01/2024',
+    'Total Amount':        100000,
+    'Rcvd Amount':         63000,
+    'Balance':             37000,
+    'Date':                '15/01/2024',
+    'Amount':              63000,
+    'Mode of payment':     'UPI',
+    'Remarks':             'Advance payment',
+    'MNRE Application date':    '05/01/2024',
+    'UHBVN Application date':   '08/01/2024',
+    'Discom file submission':   '10/01/2024',
+    'Net Meter':                '20/02/2024',
+    'Inverter settings':        '18/01/2024',
+    '1-2 week visit':           '25/01/2024',
+    'PCR':                      '28/01/2024',
+    'PCR Approval':             '01/02/2024',
+    'Subsidy Request':          '05/02/2024',
+    'Subsidy disbursal':        '15/02/2024',
+  };
+  const ws=XLSX.utils.json_to_sheet([row]);
+  // Style header row
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Template',ws);
+  XLSX.writeFile(wb,'PMSuryaGhar_Template.xlsx');
+  toast('Template downloaded!');
+}
+
+// ─── IMPORT ────────────────────────────────────────────
+function openImport(){document.getElementById('modal-import').classList.add('open');}
+
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('import-zone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file)processFile(file);
+}
+
+function handleFile(e){const file=e.target.files[0];if(file)processFile(file);}
+
+// ── Column index constants (0-based, matching your exact Excel sheet) ────────
+const COL = {
+  SL:0, CONF_DATE:1, CAPACITY:2, PANEL:3, INV_CAP:4, INVERTER:5,
+  NAME:6, ADDRESS:7, UHBVN_STATUS:8, NP_STATUS:9, INVOICE_DATE:10,
+  TOTAL_AMT:11, NETMETER_FEE:12, RCVD_AMT:13, BALANCE:14,
+  PAY_DATE:15, PAY_AMOUNT:16, PAY_MODE:17, REMARKS1:18, REMARKS2:19,
+  MNRE_DATE:20, UHBVN_DATE:21, DISCOM_SUB:22, NET_METER:23,
+  INV_SETTINGS:24, WEEK_VISIT:25, PCR:26, PCR_APPROVAL:27,
+  SUB_REQ:28, SUB_DIS:29,
+};
+
+function fmtCellDate(v) {
+  if (!v && v !== 0) return '';
+  // XLSX with raw:false returns dates as strings like "11/29/2022"
+  // or raw:true gives JS Date objects — handle both
+  if (typeof v === 'string') {
+    var s = v.trim();
+    if (!s || s === 'None' || s === 'null') return '';
+    // Try to parse various date formats
+    var d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return ('0'+d.getDate()).slice(-2)+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+d.getFullYear();
+    }
+    return s; // Return as-is if can't parse
+  }
+  return String(v).trim();
+}
+
+function safeNum(v) {
+  if (v == null || v === '') return null;
+  var n = parseFloat(String(v).replace(/,/g,'').trim());
+  return isNaN(n) ? null : n;
+}
+
+function isOk(v) {
+  if (!v) return false;
+  var s = String(v).trim().toLowerCase();
+  return s === 'ok' || s === 'yes' || s === 'done' || s === 'true' || s === '1';
+}
+
+function deriveStage(row) {
+  // Milestone "Ok" columns — highest takes priority
+  if (isOk(row[COL.SUB_DIS]))      return 5;
+  if (isOk(row[COL.SUB_REQ]))      return 4;
+  if (isOk(row[COL.PCR_APPROVAL])) return 4;
+  if (isOk(row[COL.PCR]))          return 3;
+  if (isOk(row[COL.WEEK_VISIT]))   return 3;
+  if (isOk(row[COL.NET_METER]))    return 2;
+  if (isOk(row[COL.INV_SETTINGS])) return 2;
+  if (isOk(row[COL.DISCOM_SUB]))   return 2;
+  if (isOk(row[COL.UHBVN_DATE]))   return 1;
+  if (isOk(row[COL.MNRE_DATE]))    return 1;
+
+  // NP status text
+  var np = String(row[COL.NP_STATUS] || '').trim().toLowerCase();
+  var npMap = {
+    'subsidy disbursed':5,'subsidy reedemed':5,'cfa released':5,
+    'subsidy pending':4,'subsidy awaited':4,'not reedemed':4,'pcr pending':4,
+    'inspection pending':3,
+    'feasibility received':2,'cancel cheque pending':2,
+    'feasibility pending':1,'feasibility awaited':1,'apply':1,
+  };
+  if (npMap[np] !== undefined) return npMap[np];
+
+  // UHBVN status text
+  var uh = String(row[COL.UHBVN_STATUS] || '').trim().toLowerCase();
+  if (uh === 'connection released') return 5;
+  if (uh === 'sanction received')   return 2;
+  if (uh === 'sanction pending')    return 1;
+
+  return 0;
+}
+
+// ── Normalise header key (same as before) ────────────────────────────────────
+function normKey(k) {
+  return String(k).trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
+
+// ── processFile: read Excel/CSV → importedRows ───────────────────────────────
+// importedRows is now an array of RAW row arrays (not objects)
+// so we can handle the grouped sub-row structure correctly
+function processFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, {type:'array', raw:false, cellDates:false});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      // Get as array of arrays (raw rows, row 0 = headers)
+      var aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+      if (aoa.length < 2) { alert('No data rows found.'); return; }
+      importedRows = aoa; // store raw including header row
+      showImportPreview(aoa);
+    } catch(err) { alert('Error reading file: ' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── showImportPreview ────────────────────────────────────────────────────────
+var PREVIEW_COLS = [COL.SL, COL.NAME, COL.ADDRESS, COL.TOTAL_AMT, COL.RCVD_AMT,
+                   COL.BALANCE, COL.PAY_DATE, COL.PAY_AMOUNT, COL.PAY_MODE,
+                   COL.UHBVN_STATUS, COL.NP_STATUS];
+
+function showImportPreview(aoa) {
+  var headers = aoa[0];
+  var dataRows = aoa.slice(1).filter(function(r){ return r[COL.SL] || r[COL.NAME]; });
+  if (!dataRows.length) { alert('No consumer rows found.'); return; }
+  document.getElementById('import-count').textContent = dataRows.length + ' consumers';
+  var cols = PREVIEW_COLS.filter(function(i){ return i < headers.length; });
+  var dispName = function(i){ return headers[i] || 'Col'+i; };
+  var thead = '<tr>' + cols.map(function(i){ return '<th>'+dispName(i)+'</th>'; }).join('') + '</tr>';
+  var tbody = dataRows.slice(0,6).map(function(r){
+    return '<tr>' + cols.map(function(i){ return '<td>'+(r[i]||'')+'</td>'; }).join('') + '</tr>';
+  }).join('');
+  document.getElementById('preview-tbl').querySelector('thead').innerHTML = thead;
+  document.getElementById('preview-tbl').querySelector('tbody').innerHTML = tbody;
+  document.getElementById('import-preview').style.display = 'block';
+}
+
+// ── parseExcelRows: grouped structure → consumers array ──────────────────────
+function parseExcelRows(aoa) {
+  var result = [];
+  var current = null;
+
+  for (var ri = 1; ri < aoa.length; ri++) {
+    var row = aoa[ri];
+    var hasSl   = row[COL.SL]   !== '' && row[COL.SL]   != null;
+    var hasName = row[COL.NAME] !== '' && row[COL.NAME] != null;
+
+    if (hasSl || hasName) {
+      // ── Main consumer row ──
+      if (current) result.push(current);
+
+      var total   = safeNum(row[COL.TOTAL_AMT]) || 0;
+      var rcvd    = safeNum(row[COL.RCVD_AMT])  || 0;
+      var bal     = safeNum(row[COL.BALANCE]);
+      if (bal === null) bal = Math.max(0, total - rcvd);
+
+      // Parse panel: "Vikram DCR 350" → make + wattage
+      var rawPanel  = String(row[COL.PANEL] || '').trim();
+      var modcap    = '';
+      var moduleMake = '';
+      var numMatch  = rawPanel.match(/(\d+)\s*[wW]?[pP]?\s*$/);
+      if (numMatch) {
+        modcap     = parseInt(numMatch[1]);
+        moduleMake = rawPanel.replace(numMatch[0],'').trim();
+      } else {
+        var anyNum = rawPanel.match(/(\d+)/);
+        if (anyNum) { modcap = parseInt(anyNum[1]); moduleMake = rawPanel.replace(anyNum[0],'').trim(); }
+        else moduleMake = rawPanel;
+      }
+
+      // Parse inverter capacity: "8KW" → 8
+      var rawInvCap = String(row[COL.INV_CAP] || '').trim();
+      var invcap    = parseFloat(rawInvCap) || safeNum(row[COL.CAPACITY]) || '';
+
+      // First payment entry from main row
+      var payments = [];
+      var pd = fmtCellDate(row[COL.PAY_DATE]);
+      var pa = safeNum(row[COL.PAY_AMOUNT]) || 0;
+      var pm = String(row[COL.PAY_MODE]  || '').trim();
+      var pr = [String(row[COL.REMARKS1]||'').trim(), String(row[COL.REMARKS2]||'').trim()].filter(Boolean).join(' | ');
+      if (pd || pa > 0 || pm) {
+        payments.push({ date: pd, amount: pa, mode: pm, ref: '', remark: pr });
+      }
+
+      current = {
+        id:          String(row[COL.SL] || '').trim() || uuid(),
+        name:        String(row[COL.NAME]    || '').trim(),
+        location:    String(row[COL.ADDRESS] || '').trim(),
+        discom:      'UHBVN',
+        amount:      total,
+        subsidy:     0,
+        netcost:     total,
+        paid:        rcvd,
+        balance:     bal,
+        paymode:     pm,
+        payref:      '',
+        inverter:    String(row[COL.INVERTER] || '').trim(),
+        invcap:      invcap,
+        module:      moduleMake,
+        modcap:      modcap,
+        panels:      '',
+        stageIdx:    deriveStage(row),
+        uhbvnStatus: String(row[COL.UHBVN_STATUS] || '').trim(),
+        npStatus:    String(row[COL.NP_STATUS]     || '').trim(),
+        milestones: {
+          confirmationDate:     fmtCellDate(row[COL.CONF_DATE]),
+          invoiceDate:          String(row[COL.INVOICE_DATE]||'').trim(),
+          mnreDate:             isOk(row[COL.MNRE_DATE])    ? 'Done' : '',
+          uhbvnDate:            isOk(row[COL.UHBVN_DATE])   ? 'Done' : '',
+          discomSubmission:     isOk(row[COL.DISCOM_SUB])   ? 'Done' : '',
+          netMeterDate:         isOk(row[COL.NET_METER])    ? 'Done' : '',
+          inverterSettingsDate: isOk(row[COL.INV_SETTINGS]) ? 'Done' : '',
+          weekVisitDate:        isOk(row[COL.WEEK_VISIT])   ? 'Done' : '',
+          pcrDate:              isOk(row[COL.PCR])          ? 'Done' : '',
+          pcrApprovalDate:      isOk(row[COL.PCR_APPROVAL]) ? 'Done' : '',
+          subsidyRequestDate:   isOk(row[COL.SUB_REQ])      ? 'Done' : '',
+          subsidyDisbursalDate: isOk(row[COL.SUB_DIS])      ? 'Done' : '',
+        },
+        loads:    [],
+        notes:    [String(row[COL.REMARKS1]||'').trim(), String(row[COL.REMARKS2]||'').trim()].filter(Boolean).join(' | '),
+        date:     fmtCellDate(row[COL.CONF_DATE]) || today(),
+        payments: payments,
+      };
+
+    } else if (current) {
+      // ── Sub-row = extra payment entry for current consumer ──
+      var pd2 = fmtCellDate(row[COL.PAY_DATE]);
+      var pa2 = safeNum(row[COL.PAY_AMOUNT]) || 0;
+      var pm2 = String(row[COL.PAY_MODE]  || '').trim();
+      var pr2 = [String(row[COL.REMARKS1]||'').trim(), String(row[COL.REMARKS2]||'').trim()].filter(Boolean).join(' | ');
+      if (pd2 || pa2 > 0) {
+        current.payments.push({ date: pd2, amount: pa2, mode: pm2, ref: '', remark: pr2 });
+        // Update paymode to latest payment mode
+        if (pm2) current.paymode = pm2;
+      }
+    }
+  }
+  if (current) result.push(current);
+  return result;
+}
+
+// ── importData ───────────────────────────────────────────────────────────────
+function importData(mode) {
+  var parsed = parseExcelRows(importedRows);
+  if (!parsed.length) { alert('No valid consumer rows found.'); return; }
+
+  if (mode === 'replace') {
+    consumers = parsed;
+    save(); closeModal('modal-import'); render();
+    toast(parsed.length + ' consumers imported (replaced all).');
+  } else {
+    var existingIds = new Set(consumers.map(function(c){ return c.id; }));
+    var newOnly = parsed.filter(function(m){ return !existingIds.has(m.id); });
+    if (newOnly.length === 0) {
+      toast('No new records — all IDs already exist.', 'sun');
+    } else {
+      consumers = consumers.concat(newOnly);
+      save(); closeModal('modal-import'); render();
+      var skipped = parsed.length - newOnly.length;
+      toast(newOnly.length + ' new consumer(s) added' + (skipped ? ' (' + skipped + ' duplicate(s) skipped)' : '') + '.');
+    }
+  }
+  document.getElementById('file-in').value = '';
+  importedRows = [];
+}
+
+
+// ─── EXPORT ────────────────────────────────────────────
+function exportExcel(){
+  if(typeof XLSX==='undefined'){alert('XLSX library not loaded.');return;}
+  const rows=consumers.map(c=>({
+    'Consumer ID':c.id,'Name':c.name,'Location':c.location,'DISCOM':c.discom,
+    'Amount (₹)':c.amount,'Subsidy (₹)':c.subsidy,'Net Cost (₹)':c.netcost,
+    'Paid (₹)':c.paid,'Remaining (₹)':Math.max(0,(c.netcost||0)-(c.paid||0)),
+    'Payment Mode':c.paymode,'Pay Reference':c.payref,
+    'Pay Status':payStatus(c).toUpperCase(),
+    'Inverter Brand':c.inverter,'Inverter kW':c.invcap,
+    'Module Make':c.module,'Module Wp':c.modcap,'No. Panels':c.panels,
+    'Total kWp':((c.modcap||0)*(c.panels||0)/1000).toFixed(2),
+    'Stage':STAGES[c.stageIdx],'Stage No.':c.stageIdx+1,
+    'Load Extension':(c.loads||[]).join('; '),
+    'Notes':c.notes,'Date':c.date
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Consumers',ws);
+
+  // Payment log sheet
+  const payRows=[];
+  consumers.forEach(c=>(c.payments||[]).forEach(p=>payRows.push({'Consumer ID':c.id,'Name':c.name,'Date':p.date,'Amount':p.amount,'Mode':p.mode,'Reference':p.ref,'Remark':p.remark})));
+  if(payRows.length){
+    const ws2=XLSX.utils.json_to_sheet(payRows);
+    XLSX.utils.book_append_sheet(wb,'Payment Log',ws2);
+  }
+  XLSX.writeFile(wb,`PMSuryaGhar_${today()}.xlsx`);
+  toast('Excel exported!');
+}
+
+function exportCSV(){
+  const headers=['Consumer ID','Name','Location','DISCOM','Amount','Subsidy','Net Cost','Paid','Remaining','Payment Mode','Stage','Load Extension','Notes','Date'];
+  const rows=consumers.map(c=>[c.id,c.name,c.location,c.discom,c.amount,c.subsidy,c.netcost||0,c.paid||0,Math.max(0,(c.netcost||0)-(c.paid||0)),c.paymode,STAGES[c.stageIdx],(c.loads||[]).join(';'),c.notes,c.date].map(v=>`"${v||''}"`).join(','));
+  const blob=new Blob([[headers.join(','),...rows].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`PMSuryaGhar_${today()}.csv`;a.click();
+  toast('CSV exported!');
+}
+
+function exportSingle(id){
+  const c=consumers.find(x=>x.id===id);if(!c)return;
+  if(typeof XLSX==='undefined'){exportSingleCSV(c);return;}
+  const rows=[c];
+  const ws=XLSX.utils.json_to_sheet(rows.map(c=>({'Consumer ID':c.id,'Name':c.name,'Amount':c.amount,'Net Cost':c.netcost,'Paid':c.paid,'Remaining':Math.max(0,(c.netcost||0)-(c.paid||0)),'Stage':STAGES[c.stageIdx]})));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,'File',ws);
+  XLSX.writeFile(wb,`${c.id}_${c.name.replace(/\s+/g,'_')}.xlsx`);
+}
+
+function downloadTemplate(){
+  if(typeof XLSX==='undefined'){alert('XLSX not loaded');return;}
+  const row={
+    'Confirmation date':   '01/01/2024',
+    'Plant Capacity':      '3 kW',
+    'Panel':               '540Wp x 6',
+    'Inverter Capacity':   '3',
+    'Inverter':            'Microtek',
+    'Name':                'Consumer Full Name',
+    'Permanent Address':   'Village/City, District, State',
+    'Current Status Of UHBVN Application': 'Approved',
+    'Current Status Of NP Application':    'Pending',
+    'Invoice date':        '15/01/2024',
+    'Total Amount':        100000,
+    'Rcvd Amount':         63000,
+    'Balance':             37000,
+    'Date':                '15/01/2024',
+    'Amount':              63000,
+    'Mode of payment':     'UPI',
+    'Remarks':             'Advance payment',
+    'MNRE Application date':    '05/01/2024',
+    'UHBVN Application date':   '08/01/2024',
+    'Discom file submission':   '10/01/2024',
+    'Net Meter':                '20/02/2024',
+    'Inverter settings':        '18/01/2024',
+    '1-2 week visit':           '25/01/2024',
+    'PCR':                      '28/01/2024',
+    'PCR Approval':             '01/02/2024',
+    'Subsidy Request':          '05/02/2024',
+    'Subsidy disbursal':        '15/02/2024',
+  };
+  const ws=XLSX.utils.json_to_sheet([row]);
+  // Style header row
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Template',ws);
+  XLSX.writeFile(wb,'PMSuryaGhar_Template.xlsx');
+  toast('Template downloaded!');
+}
+
+// ─── IMPORT ────────────────────────────────────────────
+function openImport(){document.getElementById('modal-import').classList.add('open');}
+
+
+// ─── PRINT ─────────────────────────────────────────────
+function printCard(id){
+  const c=consumers.find(x=>x.id===id);if(!c)return;
+  const net=(c.netcost||0),paid=(c.paid||0),rem=Math.max(0,net-paid);
+  const payLog=(c.payments||[]).map(p=>`<tr><td>${p.date}</td><td>${p.mode}</td><td>${p.ref||''}</td><td>₹${p.amount.toLocaleString()}</td><td>${p.remark||''}</td></tr>`).join('');
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${c.name}</title><style>
+    body{font-family:Arial,sans-serif;padding:30px;font-size:13px;}
+    h2{color:#FF8C00;margin-bottom:5px;}
+    .hdr{display:flex;justify-content:space-between;border-bottom:2px solid #FF8C00;padding-bottom:10px;margin-bottom:20px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#FF8C00;color:#fff;padding:7px 10px;text-align:left;font-size:12px;}
+    td{padding:6px 10px;border-bottom:1px solid #eee;}
+    tr:nth-child(even) td{background:#f9f9f9;}
+    .section-title{font-size:12px;color:#FF8C00;font-weight:bold;letter-spacing:1px;margin:16px 0 8px;border-bottom:1px solid #FFD580;padding-bottom:4px;}
+    .stage-track{display:flex;gap:8px;margin:10px 0;}
+    .s{padding:4px 10px;border-radius:12px;font-size:11px;background:#eee;}
+    .s.done{background:#22C55E;color:#fff;}.s.active{background:#FF8C00;color:#fff;}.s.pending{background:#eee;color:#999;}
+  </style></head><body>
+  <div class="hdr"><div><h2>PM Surya Ghar Muft Bijli Yojana</h2><div style="font-size:11px;color:#888">Vendor Portal — Consumer File</div></div><div style="text-align:right;font-size:11px;color:#666">Printed: ${today()}</div></div>
+  <table><tr><th colspan="4">Consumer Information</th></tr>
+  <tr><td><b>Name</b></td><td>${c.name}</td><td><b>Consumer ID</b></td><td>${c.id}</td></tr>
+  <tr><td><b>Location</b></td><td>${c.location}</td><td><b>DISCOM</b></td><td>${c.discom}</td></tr>
+  <tr><td><b>Date Added</b></td><td>${c.date}</td><td><b>Current Stage</b></td><td>${STAGES[c.stageIdx]}</td></tr></table>
+  <div class="section-title">FINANCIAL DETAILS</div>
+  <table><tr><th>Project Amount</th><th>Subsidy</th><th>Net Cost</th><th>Received</th><th>Remaining</th><th>Payment Mode</th></tr>
+  <tr><td>₹${(c.amount||0).toLocaleString()}</td><td>₹${(c.subsidy||0).toLocaleString()}</td><td>₹${net.toLocaleString()}</td><td style="color:#22C55E;font-weight:bold">₹${paid.toLocaleString()}</td><td style="color:#EF4444;font-weight:bold">₹${rem.toLocaleString()}</td><td>${c.paymode||'N/A'}</td></tr></table>
+  <div class="section-title">SYSTEM DETAILS</div>
+  <table><tr><th>Inverter Brand</th><th>Capacity</th><th>Module Make</th><th>Module Wp</th><th>No. Panels</th><th>Total kWp</th></tr>
+  <tr><td>${c.inverter}</td><td>${c.invcap} kW</td><td>${c.module}</td><td>${c.modcap} Wp</td><td>${c.panels}</td><td>${((c.modcap||0)*(c.panels||0)/1000).toFixed(2)} kWp</td></tr></table>
+  <div class="section-title">STAGE PROGRESS</div>
+  <div class="stage-track">${STAGES.map((s,i)=>`<div class="s ${i<c.stageIdx?'done':i===c.stageIdx?'active':'pending'}">${SICONS[i]} ${s}</div>`).join('')}</div>
+  <div class="section-title">PAYMENT LOG</div>
+  <table><tr><th>Date</th><th>Mode</th><th>Reference</th><th>Amount</th><th>Remark</th></tr>${payLog||'<tr><td colspan="5" style="text-align:center;color:#999">No payment entries</td></tr>'}</table>
+  <div class="section-title">LOAD EXTENSION</div>
+  <div>${(c.loads||[]).join(', ')||'None'}</div>
+  <div class="section-title">NOTES</div><div>${c.notes||'No notes.'}</div>
+  <div style="margin-top:30px;border-top:1px solid #eee;padding-top:10px;font-size:10px;color:#999;">PM Surya Ghar Muft Bijli Yojana | Vendor Portal Tracker | Generated: ${new Date().toLocaleString()}</div>
+  </body></html>`);
+  w.print();
+}
+
+// ─── REMOTE / SYNC ─────────────────────────────────────
+function openRemoteModal(){
+  updateSidebar();
+  document.getElementById('modal-remote').classList.add('open');
+}
+
+async function testConnection(){
+  const url=document.getElementById('api-url').value.trim();
+  const key=document.getElementById('api-key').value.trim();
+  const el=document.getElementById('conn-status');
+  if(!url){el.textContent='Enter API URL first.';el.style.color='var(--yellow)';return;}
+  el.textContent='Testing...';
+  try{
+    const res=await fetch(url+'/ping',{headers:key?{'X-API-Key':key}:{}});
+    if(res.ok){el.textContent='✅ Connected!';el.style.color='var(--green)';document.getElementById('remote-dot').classList.add('connected');document.getElementById('remote-status').textContent='Connected';}
+    else{el.textContent='❌ Server responded with: '+res.status;el.style.color='var(--red)';}
+  }catch(e){el.textContent='❌ Cannot reach server. Check URL and network.';el.style.color='var(--red)';}
+}
+
+async function syncToServer(){
+  const url=document.getElementById('api-url').value.trim();
+  const key=document.getElementById('api-key').value.trim();
+  const el=document.getElementById('conn-status');
+  if(!url){el.textContent='Enter API URL first.';return;}
+  try{
+    const res=await fetch(url+'/consumers',{method:'POST',headers:{'Content-Type':'application/json',...(key?{'X-API-Key':key}:{})},body:JSON.stringify(consumers)});
+    if(res.ok){el.textContent='✅ Data pushed to server!';el.style.color='var(--green)';}
+    else{el.textContent='❌ Push failed: '+res.status;el.style.color='var(--red)';}
+  }catch(e){el.textContent='❌ Push failed. '+e.message;el.style.color='var(--red)';}
+}
+
+async function pullFromServer(){
+  const url=document.getElementById('api-url').value.trim();
+  const key=document.getElementById('api-key').value.trim();
+  const el=document.getElementById('conn-status');
+  if(!url){el.textContent='Enter API URL first.';return;}
+  try{
+    const res=await fetch(url+'/consumers',{headers:key?{'X-API-Key':key}:{}});
+    if(res.ok){
+      const data=await res.json();
+      if(Array.isArray(data)){consumers=data;save();render();el.textContent=`✅ Pulled ${data.length} records!`;el.style.color='var(--green)';}
+    }else{el.textContent='❌ Pull failed: '+res.status;el.style.color='var(--red)';}
+  }catch(e){el.textContent='❌ Pull failed. '+e.message;el.style.color='var(--red)';}
+}
+
+function backupToJSON(){
+  const blob=new Blob([JSON.stringify(consumers,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`PMSuryaGhar_backup_${today()}.json`;a.click();
+  toast('JSON backup downloaded!');
+}
+
+function restoreFromJSON(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0];
+    const reader=new FileReader();
+    reader.onload=ev=>{try{consumers=JSON.parse(ev.target.result);save();render();toast('Backup restored!');}catch(e){alert('Invalid JSON file.');}};
+    reader.readAsText(file);
+  };
+  inp.click();
+}
+
+// ─── MODAL UTILS ───────────────────────────────────────
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+function toggleChk(el){el.classList.toggle('checked');}
+
+// ─── INIT ──────────────────────────────────────────────
+load();render();
+</script>
+
+<!-- SERVER.PY COMMENT BLOCK (download separately) -->
+<!--
+════════════════════════════════════════════════════════════════════
+  COMPANION: server.py  — Run this for REMOTE ACCESS over network
+════════════════════════════════════════════════════════════════════
+
+Save the following as server.py and run: python server.py
+
+────────────────────────────────────────────────────────────────────
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+import json, os, threading, socket
+
+DATA_FILE = 'sg_data.json'
+API_KEY = 'your-secret-key'  # Change this!
+PORT = 5050
+
+class Handler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/api/ping':
+            self.send_json({'status': 'ok'})
+        elif self.path == '/api/consumers':
+            if not self.check_key(): return
+            data = []
+            if os.path.exists(DATA_FILE):
+                with open(DATA_FILE) as f: data = json.load(f)
+            self.send_json(data)
+        else:
+            super().do_GET()
+
+    def do_POST(self):
+        if self.path == '/api/consumers':
+            if not self.check_key(): return
+            length = int(self.headers['Content-Length'])
+            body = self.rfile.read(length)
+            data = json.loads(body)
+            with open(DATA_FILE, 'w') as f: json.dump(data, f, indent=2)
+            self.send_json({'status': 'saved', 'count': len(data)})
+
+    def check_key(self):
+        key = self.headers.get('X-API-Key', '')
+        if key != API_KEY:
+            self.send_response(403)
+            self.end_headers()
+            return False
+        return True
+
+    def send_json(self, data):
+        body = json.dumps(data).encode()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(body)))
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-API-Key')
+        self.end_headers()
+
+    def log_message(self, fmt, *args): pass  # Suppress logs
+
+hostname = socket.gethostbyname(socket.gethostname())
+print(f"Server running at http://{hostname}:{PORT}")
+print(f"API Endpoint: http://{hostname}:{PORT}/api")
+print(f"Open on any device on your network!")
+HTTPServer(('0.0.0.0', PORT), Handler).serve_forever()
+────────────────────────────────────────────────────────────────────
+-->
+</body>
+</html>

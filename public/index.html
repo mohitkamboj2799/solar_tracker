@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM Surya Ghar — Vendor Tracker v2</title>
+    <style>
+        :root {
+            --sun: #FF8C00;
+            --sun2: #FFB347;
+            --bg: #09101E;
+            --bg2: #0F1929;
+            --bg3: #162133;
+            --panel: #111E33;
+            --border: #1D2E48;
+            --text: #E4EAF5;
+            --text2: #8498BB;
+            --text3: #455A7A;
+            --green: #22C55E;
+            --blue: #3B82F6;
+            --yellow: #EAB308;
+            --red: #EF4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0A1120, #152035);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-sun {
+            width: 34px;
+            height: 34px;
+            background: radial-gradient(circle, #FFE080 0%, #FF8C00 55%, #C05000 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: 0 0 18px rgba(255, 140, 0, 0.6);
+        }
+
+        .logo-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .logo-title span {
+            color: var(--sun);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: var(--sun);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: var(--sun2);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text2);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--sun);
+            color: var(--sun);
+        }
+
+        .btn-green {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: var(--green);
+        }
+
+        .btn-blue {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--blue);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--text3);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .stat-box {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--sun);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+
+        .filter-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text2);
+            margin-bottom: 6px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .filter-item:hover {
+            background: rgba(255, 140, 0, 0.1);
+            color: var(--sun);
+        }
+
+        .filter-item.active {
+            background: rgba(255, 140, 0, 0.15);
+            border-color: var(--sun);
+            color: var(--sun);
+        }
+
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 0 12px;
+            gap: 8px;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-size: 12px;
+            padding: 10px 0;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text3);
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 140, 0, 0.35);
+            box-shadow: 0 4px 28px rgba(255, 140, 0, 0.06);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--bg3), var(--bg2));
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--sun);
+        }
+
+        .card-meta {
+            flex: 1;
+        }
+
+        .card-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .card-id {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .badge-paid {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--green);
+        }
+
+        .badge-partial {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--yellow);
+        }
+
+        .badge-unpaid {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text2);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--sun);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text3);
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--sun);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text3);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-sun">☀️</div>
+            <div>
+                <div class="logo-title">PM <span>Surya Ghar</span></div>
+                <div style="font-size: 9px; color: var(--text3); letter-spacing: 1px;">VENDOR TRACKER</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-blue" onclick="openAddModal()">➕ Add Consumer</button>
+            <button class="btn btn-green" onclick="exportData()">📥 Export</button>
+            <button class="btn btn-outline" onclick="location.reload()">🔄 Refresh</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="section">
+                <div class="section-title">📊 Overview</div>
+                <div class="stat-box">
+                    <div class="stat-value" id="total-count">0</div>
+                    <div class="stat-label">Total Consumers</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="paid-count">0</div>
+                    <div class="stat-label">Fully Paid</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="partial-count">0</div>
+                    <div class="stat-label">Partial</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="unpaid-count">0</div>
+                    <div class="stat-label">Unpaid</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">🔍 Filter by Stage</div>
+                <div class="filter-item active" onclick="filterByStage('all', this)">All Consumers</div>
+                <div class="filter-item" onclick="filterByStage('Application Submitted', this)">App Submitted</div>
+                <div class="filter-item" onclick="filterByStage('DISCOM Approved', this)">DISCOM Approved</div>
+                <div class="filter-item" onclick="filterByStage('Installation Done', this)">Installation Done</div>
+                <div class="filter-item" onclick="filterByStage('Net Meter Applied', this)">Net Meter</div>
+                <div class="filter-item" onclick="filterByStage('Inspection Done', this)">Inspection Done</div>
+                <div class="filter-item" onclick="filterByStage('Subsidy Released', this)">Subsidy Released</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">💰 Filter by Payment</div>
+                <div class="filter-item" onclick="filterByPayment('all', this)">All Payments</div>
+                <div class="filter-item" onclick="filterByPayment('paid', this)">Fully Paid</div>
+                <div class="filter-item" onclick="filterByPayment('partial', this)">Partial</div>
+                <div class="filter-item" onclick="filterByPayment('unpaid', this)">Unpaid</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <div class="toolbar">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="search-input" placeholder="Search by name, ID, or mobile..." onkeyup="performSearch()">
+                </div>
+            </div>
+
+            <div id="content-area">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading data...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD CONSUMER MODAL -->
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">➕ Add New Consumer</div>
+            <form onsubmit="saveConsumer(event)">
+                <div class="form-group">
+                    <label>Consumer Name *</label>
+                    <input type="text" id="name-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Mobile No *</label>
+                    <input type="tel" id="mobile-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email-input">
+                </div>
+                <div class="form-group">
+                    <label>Address *</label>
+                    <input type="text" id="address-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Roof Area (m²)</label>
+                    <input type="number" id="roofarea-input">
+                </div>
+                <div class="form-group">
+                    <label>Minimum Capacity (kW)</label>
+                    <input type="number" id="capacity-input">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Add Consumer</button>
+                    <button type="button" class="btn btn-outline" style="flex: 1;" onclick="closeAddModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let allConsumers = [];
+        let filteredConsumers = [];
+        let currentStageFilter = 'all';
+        let currentPaymentFilter = 'all';
+        let currentSearchTerm = '';
+
+        // Load data on startup
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_BASE}/consumers`);
+                const data = await response.json();
+                allConsumers = data.data || [];
+                filteredConsumers = [...allConsumers];
+                updateStats();
+                renderConsumers();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('content-area').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <p>Failed to load data</p>
+                        <p style="font-size: 11px; margin-top: 10px;">Server may not be responding</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateStats() {
+            const total = allConsumers.length;
+            const paid = allConsumers.filter(c => c.paymentStatus === 'paid').length;
+            const partial = allConsumers.filter(c => c.paymentStatus === 'partial').length;
+            const unpaid = allConsumers.filter(c => c.paymentStatus === 'unpaid').length;
+
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('paid-count').textContent = paid;
+            document.getElementById('partial-count').textContent = partial;
+            document.getElementById('unpaid-count').textContent = unpaid;
+        }
+
+        function filterByStage(stage, element) {
+            currentStageFilter = stage;
+            document.querySelectorAll('.section:nth-child(2) .filter-item').forEach(e => e.classList.remove('active'));
+            element.classList.add('active');
+            applyFilters();
+        }
+
+        function filterByPayment(status, element) {
+            currentPaymentFilter = status;
+            document.querySelectorAll('.section:nth-child(3) .filter-item').forEach(e => e.classList.remove('active'));
+            element.classList.add('active');
+            applyFilters();
+        }
+
+        function applyFilters() {
+            filteredConsumers = allConsumers.filter(c => {
+                let stageMatch = currentStageFilter === 'all' || c.stage === currentStageFilter;
+                let paymentMatch = currentPaymentFilter === 'all' || c.paymentStatus === currentPaymentFilter;
+                let searchMatch = !currentSearchTerm || 
+                    c.consumerName.toLowerCase().includes(currentSearchTerm) ||
+                    c.id.toLowerCase().includes(currentSearchTerm) ||
+                    c.mobileNo.includes(currentSearchTerm);
+                return stageMatch && paymentMatch && searchMatch;
+            });
+            renderConsumers();
+        }
+
+        function performSearch() {
+            currentSearchTerm = document.getElementById('search-input').value.toLowerCase();
+            applyFilters();
+        }
+
+        function renderConsumers() {
+            if (filteredConsumers.length === 0) {
+                document.getElementById('content-area').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p>No consumers found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const badgeClass = {
+                'paid': 'badge-paid',
+                'partial': 'badge-partial',
+                'unpaid': 'badge-unpaid'
+            };
+
+            let html = '<div class="cards">';
+            filteredConsumers.forEach(consumer => {
+                html += `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="avatar">${consumer.consumerName.charAt(0)}</div>
+                            <div class="card-meta">
+                                <div class="card-name">${consumer.consumerName}</div>
+                                <div class="card-id">${consumer.id}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text2); margin-bottom: 10px;">
+                            📞 ${consumer.mobileNo}
+                            <br>
+                            📍 ${consumer.address}
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <span class="badge ${badgeClass[consumer.paymentStatus]}">${consumer.paymentStatus.toUpperCase()}</span>
+                            <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: var(--blue);">${consumer.stage}</span>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text3); margin-bottom: 10px;">
+                            💰 ₹${consumer.totalAmount.toLocaleString('en-IN')} | Paid: ₹${consumer.paidAmount.toLocaleString('en-IN')}
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-blue btn-sm" onclick="viewDetails('${consumer.id}')">👁️ View</button>
+                            <button class="btn btn-green btn-sm" onclick="editConsumer('${consumer.id}')">✏️ Edit</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('content-area').innerHTML = html;
+        }
+
+        function openAddModal() {
+            document.getElementById('add-modal').classList.add('active');
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.remove('active');
+            document.querySelector('form').reset();
+        }
+
+        async function saveConsumer(event) {
+            event.preventDefault();
+            const data = {
+                consumerName: document.getElementById('name-input').value,
+                mobileNo: document.getElementById('mobile-input').value,
+                email: document.getElementById('email-input').value,
+                address: document.getElementById('address-input').value,
+                roofArea: parseInt(document.getElementById('roofarea-input').value) || 0,
+                minCapacity: parseInt(document.getElementById('capacity-input').value) || 0
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/consumers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    closeAddModal();
+                    loadData();
+                    alert('Consumer added successfully!');
+                }
+            } catch (error) {
+                alert('Error adding consumer');
+            }
+        }
+
+        function viewDetails(id) {
+            const consumer = allConsumers.find(c => c.id === id);
+            if (consumer) {
+                alert(`
+Name: ${consumer.consumerName}
+ID: ${consumer.id}
+Mobile: ${consumer.mobileNo}
+Address: ${consumer.address}
+Stage: ${consumer.stage}
+Payment Status: ${consumer.paymentStatus}
+Total Amount: ₹${consumer.totalAmount}
+Paid Amount: ₹${consumer.paidAmount}
+                `);
+            }
+        }
+
+        function editConsumer(id) {
+            alert('Edit feature coming soon!');
+        }
+
+        function exportData() {
+            const data = JSON.stringify(allConsumers, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `consumers_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        }
+
+        // Add btn-sm styling
+        const style = document.createElement('style');
+        style.textContent = `
+            .btn-sm { padding: 5px 10px; font-size: 11px; }
+        `;
+        document.head.appendChild(style);
+
+        // Start app
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

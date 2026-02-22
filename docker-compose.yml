@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  surya-ghar:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - API_KEY=surya-ghar-2024
+      - NODE_ENV=production
+    container_name: surya-ghar-tracker
+    restart: unless-stopped
+    networks:
+      - surya-network
+
+networks:
+  surya-network:
+    driver: bridge
